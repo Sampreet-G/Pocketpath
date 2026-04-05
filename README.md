@@ -1,16 +1,111 @@
-# React + Vite
+# PocketPath – Personal Finance UI for Young Professionals
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> A modern personal finance dashboard concept designed for young professionals who want a simpler and more engaging way to manage money.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## ✨ Features
 
-## React Compiler
+* 📊 Clean and modern dashboard UI
+* 💰 Total balance overview
+* 🧾 Spending summary cards
+* 📅 Recent transaction list
+* 🎯 Savings goals with progress tracking
+* 🧠 Weekly money reflection feature
+* 📱 Bottom navigation system
+* ⚡ Responsive card-based layout
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 🛠️ Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+* React
+* Vite
+* Tailwind CSS
+
+---
+
+## 📸 Screens Included
+
+1. Home Dashboard
+2. Recent Activity Section
+3. Goals Section
+4. Weekly Reflection Section
+5. Bottom Navigation
+
+---
+
+## 🚀 Installation
+
+### Clone the repository
+
+```bash id="x5rnuv"
+git clone https://github.com/yourusername/pocketpath-finance-ui.git
+```
+
+### Go to the project folder
+
+```bash id="f0pkb5"
+cd pocketpath-finance-ui
+```
+
+### Install dependencies
+
+```bash id="r02h60"
+npm install
+```
+
+### Run the development server
+
+```bash id="9f6dme"
+npm run dev
+```
+
+### Open in browser
+
+```bash id="bg5bgh"
+http://localhost:5173
+```
+
+---
+
+## 📂 Project Structure
+
+```bash id="4r4d7k"
+src/
+├── App.jsx
+├── main.jsx
+├── index.css
+```
+
+---
+
+## 🎯 Design Goal
+
+PocketPath is designed to make personal finance feel:
+
+* Simple instead of overwhelming
+* Visual instead of technical
+* Habit-focused instead of transactional
+* Friendly instead of intimidating
+
+The app helps first-job professionals understand spending behavior, track savings goals, and build better money habits.
+
+---
+
+## 🔮 Future Improvements
+
+* Add charts and analytics
+* Add dark mode
+* Add authentication
+* Add expense tracking forms
+* Add API integration
+* Add database support
+* Improve mobile responsiveness
+
+---
+
+## 👨‍💻 Author
+
+**Sampreet**
+
