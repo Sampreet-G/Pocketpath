@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "./context/AuthContext";
 import { dashboardApi, txApi, goalsApi, insightsApi, reflectApi, profileApi } from "./api";
+import OnboardingDemo from "./pages/OnboardingDemo";
+import ProfilePage from "./pages/ProfilePage";
 
 
 /* ─── HELPERS ─────────────────────────────────────────────── */
@@ -581,102 +583,6 @@ function ReflectContent({ onComplete, isDesktop, showToast }) {
   );
 }
 
-function ProfileContent({ isDesktop, showToast }) {
-  const { user, logout } = useAuth();
-  const [profile,   setProfile]   = useState(null);
-  const [loading,   setLoading]   = useState(true);
-  const [editMode,  setEditMode]   = useState(false);
-  const [form,      setForm]       = useState({});
-  const [saving,    setSaving]     = useState(false);
-
-  useEffect(() => {
-    profileApi.get()
-      .then(res => { setProfile(res.user); setForm({ name: res.user.name, email: res.user.email, monthlyIncome: res.user.monthlyIncome, currency: res.user.currency }); })
-      .catch(e => showToast('⚠️ ' + e.message))
-      .finally(() => setLoading(false));
-  }, []);
-
-  async function saveProfile() {
-    setSaving(true);
-    try {
-      const res = await profileApi.update(form);
-      setProfile(res.user);
-      setEditMode(false);
-      showToast('✓ Profile updated!');
-    } catch (e) {
-      showToast('⚠️ ' + e.message);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  if (loading) return <Spinner/>;
-
-  const p = profile || user;
-  const initial = p?.name?.[0]?.toUpperCase() || 'U';
-
-  const groups = [
-    [
-      {icon:"🔔",bg:"#FDE8D8",label:"Notifications"},
-      {icon:"📤",bg:"#FDF8E8",label:"Export Data"},
-    ],
-    [
-      {icon:"🔒",bg:"#E8F0FD",label:"Privacy & Security"},
-      {icon:"❓",bg:"#E8F4E8",label:"Help & Support"},
-    ],
-  ];
-
-  return (
-    <div className="page">
-      <div className={isDesktop?"":"px"} style={isDesktop?{maxWidth:560}:{}}>
-        {/* Profile header */}
-        <div style={{display:"flex",alignItems:"center",gap:16,padding:isDesktop?"0 0 24px":"24px 0"}}>
-          <div className="avatar">{initial}</div>
-          <div>
-            <div style={{fontFamily:"var(--font-d)",fontSize:22,fontWeight:800}}>{p?.name}</div>
-            <div style={{fontSize:13,color:"var(--text-muted)",marginTop:2}}>{p?.email}</div>
-            <div style={{fontSize:12,color:"var(--text-muted)",marginTop:1}}>{p?.currency} · {fmtINR(p?.monthlyIncome||0)}/mo income</div>
-          </div>
-        </div>
-
-        {/* Edit form */}
-        {editMode ? (
-          <div className="card" style={{marginBottom:14}}>
-            <div style={{fontFamily:"var(--font-d)",fontSize:15,fontWeight:700,marginBottom:14}}>Edit Profile</div>
-            <input className="input-field" placeholder="Name" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/>
-            <input className="input-field" placeholder="Email" type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))}/>
-            <input className="input-field" placeholder="Monthly income (₹)" type="number" value={form.monthlyIncome} onChange={e=>setForm(f=>({...f,monthlyIncome:Number(e.target.value)}))}/>
-            <div style={{display:"flex",gap:8}}>
-              <button className="btn-primary" style={{flex:1,padding:12}} onClick={saveProfile} disabled={saving}>{saving?'Saving…':'Save'}</button>
-              <button className="btn-primary" style={{flex:1,padding:12,background:"var(--bg2)",color:"var(--text)"}} onClick={()=>setEditMode(false)}>Cancel</button>
-            </div>
-          </div>
-        ) : (
-          <button className="btn-primary" style={{background:"var(--green-pale)",color:"var(--green)",marginBottom:14}} onClick={()=>setEditMode(true)}>
-            ✏️ Edit Profile
-          </button>
-        )}
-
-        {groups.map((g,gi) => (
-          <div key={gi} className="settings-group">
-            {g.map((s,si) => (
-              <div key={si} className="setting-row">
-                <div className="setting-icon" style={{background:s.bg}}>{s.icon}</div>
-                <div style={{flex:1,fontSize:14,fontWeight:500}}>{s.label}</div>
-                <div style={{fontSize:14,color:"var(--text-muted)"}}>›</div>
-              </div>
-            ))}
-          </div>
-        ))}
-
-        <button className="btn-primary" style={{background:"var(--red-light)",color:"var(--red)",marginTop:4}} onClick={logout}>
-          Sign Out
-        </button>
-      </div>
-    </div>
-  );
-}
-
 /* ─── ADD MODAL ───────────────────────────────────────────── */
 function AddModal({ onClose, onAdd }) {
   const [amount,  setAmount]  = useState('');
@@ -756,6 +662,18 @@ export default function PocketPath() {
   const [toast,      setToast]  = useState(null);
   const [isDesktop,  setDesk]   = useState(window.innerWidth >= 768);
   const [txRefresh,  setTxRef]  = useState(0);
+  const { user } = useAuth();
+  // Show onboarding once per account (keyed by user id)
+  const [showOnboarding, setOnboarding] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const key = user?._id ? `pp_onboarded_${user._id}` : 'pp_onboarded';
+    return !localStorage.getItem(key);
+  });
+  function doneOnboarding() {
+    const key = user?._id ? `pp_onboarded_${user._id}` : 'pp_onboarded';
+    localStorage.setItem(key, '1');
+    setOnboarding(false);
+  }
 
   useEffect(() => {
     const h = () => setDesk(window.innerWidth >= 768);
@@ -786,10 +704,11 @@ export default function PocketPath() {
     if (tab === 'goals')    return <GoalsContent    {...pp}/>;
     if (tab === 'insights') return <InsightsContent {...pp}/>;
     if (tab === 'reflect')  return <ReflectContent  {...pp}/>;
-    if (tab === 'profile')  return <ProfileContent  {...pp}/>;
+    if (tab === 'profile')  return <ProfilePage     {...pp}/>;
   }
 
   const Overlays = () => <>
+    {showOnboarding && <OnboardingDemo onDone={doneOnboarding}/>}
     {showModal && <AddModal onClose={() => setModal(false)} onAdd={addTx}/>}
     {toast     && <div className="toast">{toast}</div>}
   </>;
@@ -839,8 +758,10 @@ export default function PocketPath() {
               <DarkToggle dark={dark} toggle={() => setDark(d => !d)}/>
               <button onClick={() => setTab('profile')}
                 style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",padding:"5px 12px 5px 5px",borderRadius:"var(--r-xs)",background:tab==="profile"?"var(--green-pale)":"transparent",border:"none",transition:"background 0.15s"}}>
-                <div style={{width:32,height:32,borderRadius:10,background:"linear-gradient(135deg,var(--green-light),var(--green))",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:14}}>U</div>
-                <span style={{fontSize:13,fontWeight:600,color:"var(--text)",fontFamily:"var(--font-b)"}}>Profile</span>
+                <div style={{width:32,height:32,borderRadius:10,background:"linear-gradient(135deg,var(--green-light),var(--green))",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:14,overflow:"hidden",flexShrink:0}}>
+                  {user?.avatar ? <img src={user.avatar} style={{width:"100%",height:"100%",objectFit:"cover"}}/> : (user?.name?.[0]?.toUpperCase()||"U")}
+                </div>
+                <span style={{fontSize:13,fontWeight:600,color:"var(--text)",fontFamily:"var(--font-b)"}}>{user?.name?.split(" ")[0]||"Profile"}</span>
               </button>
             </div>
           </header>
