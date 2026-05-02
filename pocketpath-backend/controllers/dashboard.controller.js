@@ -1,7 +1,8 @@
+import mongoose from 'mongoose';
 import Transaction from '../models/Transaction.model.js';
 import User from '../models/User.model.js';
 
-// @desc    Get home dashboard data (balance, income, spent, saved, spend by category, recent txns, streak, tip)
+// @desc    Get home dashboard data
 // @route   GET /api/dashboard
 // @access  Private
 export const getDashboard = async (req, res) => {
@@ -19,9 +20,9 @@ export const getDashboard = async (req, res) => {
     });
 
     // ── Monthly income & expenses ─────────────────────────────
-    let monthlyIncome  = 0;
-    let totalSpent     = 0;
-    const categoryMap  = {};
+    let monthlyIncome = 0;
+    let totalSpent    = 0;
+    const categoryMap = {};
 
     for (const txn of monthlyTxns) {
       if (txn.type === 'income') {
@@ -40,17 +41,16 @@ export const getDashboard = async (req, res) => {
       : 0;
 
     // ── Spend by category ─────────────────────────────────────
-    const spendByCategory = Object.entries(categoryMap).map(([category, amount]) => ({
-      category,
-      amount,
-    }));
+    const spendByCategory = Object.entries(categoryMap)
+      .sort((a, b) => b[1] - a[1])
+      .map(([category, amount]) => ({ category, amount }));
 
     // ── Recent transactions (last 5) ──────────────────────────
     const recentTransactions = await Transaction.find({ user: req.user._id })
       .sort({ date: -1 })
       .limit(5);
 
-    // ── Smart tip (food overspend example from UI) ────────────
+    // ── Smart tip ────────────────────────────────────────────
     const foodSpend = categoryMap['Food'] || 0;
     const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const prevMonthEnd   = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
@@ -58,7 +58,7 @@ export const getDashboard = async (req, res) => {
     const prevFoodAgg = await Transaction.aggregate([
       {
         $match: {
-          user: req.user._id,
+          user: new mongoose.Types.ObjectId(req.user._id),
           type: 'expense',
           category: 'Food',
           date: { $gte: prevMonthStart, $lte: prevMonthEnd },

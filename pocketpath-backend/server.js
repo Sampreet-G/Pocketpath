@@ -17,7 +17,25 @@ connectDB();
 const app = express();
 
 // ─── Middleware ───────────────────────────────────────────────
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:4173', // vite preview
+  'http://localhost:3000',
+  process.env.CLIENT_ORIGIN,
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // allow requests with no origin (curl, Postman, mobile apps)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS: origin ${origin} not allowed`));
+    }
+  },
+  credentials: true,
+}));
+
 app.use(express.json());
 
 // ─── Routes ──────────────────────────────────────────────────

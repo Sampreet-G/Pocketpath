@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Transaction from '../models/Transaction.model.js';
 import Budget from '../models/Budget.model.js';
 
@@ -14,7 +15,7 @@ export const getMonthlyTrend = async (req, res) => {
     const trend = await Transaction.aggregate([
       {
         $match: {
-          user: req.user._id,
+          user: new mongoose.Types.ObjectId(req.user._id),
           date: { $gte: sixMonthsAgo },
         },
       },
@@ -48,7 +49,7 @@ export const getCategoryBreakdown = async (req, res) => {
     const breakdown = await Transaction.aggregate([
       {
         $match: {
-          user: req.user._id,
+          user: new mongoose.Types.ObjectId(req.user._id),
           type: 'expense',
           date: { $gte: startOfMonth },
         },
@@ -82,7 +83,7 @@ export const getCategoryBreakdown = async (req, res) => {
   }
 };
 
-// @desc    Get / set budgets (category limits)
+// @desc    Get all category budgets
 // @route   GET /api/insights/budgets
 // @access  Private
 export const getBudgets = async (req, res) => {
