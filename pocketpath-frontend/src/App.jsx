@@ -153,6 +153,21 @@ function HomeContent({ isDesktop, onAdd, showToast }) {
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
           <StreakCard/>
           {tip && <InsightBanner/>}
+          <div className="card">
+            <div className="section-title" style={{marginBottom:12}}>Quick Actions</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+              {[
+                {icon:'➕',label:'Add Expense',action:onAdd,color:'var(--green-pale)'},
+                {icon:'🎯',label:'New Goal',action:onAdd,color:'#EDE8F8'},
+                {icon:'📊',label:'View Insights',action:()=>{},color:'#FDF0D8'},
+                {icon:'🧘',label:'Reflect',action:()=>{},color:'#D4E8DC'},
+              ].map((a,i)=>(
+                <button key={i} onClick={a.action} style={{display:'flex',alignItems:'center',gap:8,padding:'11px 12px',borderRadius:'var(--r-sm)',background:a.color,border:'none',cursor:'pointer',fontFamily:'var(--font-b)',fontSize:13,fontWeight:600,color:'var(--text)',transition:'all 0.15s',textAlign:'left'}}>
+                  <span style={{fontSize:16}}>{a.icon}</span>{a.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
         <div className="card">
           <div className="section-hdr"><div className="section-title">Spend by Category</div></div>
@@ -258,25 +273,63 @@ function ActivityContent({ isDesktop, refreshKey }) {
           <div style={{fontSize:11,background:"var(--green-pale)",color:"var(--green)",padding:"5px 12px",borderRadius:99,fontWeight:600}}>{total} txns</div>
         </div>
       )}
-      <div className={isDesktop?"":"px"} style={isDesktop?{maxWidth:700}:{}}>
-        {transactions.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">📋</div>
-            <div className="empty-title">No transactions yet</div>
-            <div>Start by adding your first expense</div>
-          </div>
-        ) : transactions.map(t => (
-          <div key={t._id} className="tx-row">
-            <div className="tx-icon" style={{background: CAT_COLOR[t.category]||'#F0EDE8'}}>{CAT_ICON[t.category]||'📌'}</div>
-            <div className="tx-info">
-              <div className="tx-name">{t.title}</div>
-              <div className="tx-cat">{t.category}{t.merchant ? ` · ${t.merchant}` : ''}</div>
+      {/* Desktop: stats row + two-column list */}
+      {isDesktop && (
+        <div className="page-stats-row">
+          {[
+            {label:'Total transactions', val:total, color:'var(--text)'},
+            {label:'Total income', val:fmtINR(transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0)), color:'var(--green-light)'},
+            {label:'Total spent', val:fmtINR(transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0)), color:'var(--red)'},
+            {label:'Categories', val:[...new Set(transactions.map(t=>t.category))].length, color:'var(--accent)'},
+          ].map((s,i)=>(
+            <div key={i} className="page-stat-card">
+              <div className="page-stat-card-val" style={{color:s.color}}>{s.val}</div>
+              <div className="page-stat-card-label">{s.label}</div>
             </div>
-            <div className={`tx-amount ${t.type==='income'?"credit":"debit"}`}>
-              {t.type==='income'?'+':'-'}{fmtINR(t.amount)}
+          ))}
+        </div>
+      )}
+      <div className={isDesktop?"d-grid-2":"px"}>
+        <div>
+          {transactions.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-icon">📋</div>
+              <div className="empty-title">No transactions yet</div>
+              <div>Start by adding your first expense</div>
+            </div>
+          ) : transactions.map(t => (
+            <div key={t._id} className="tx-row">
+              <div className="tx-icon" style={{background: CAT_COLOR[t.category]||'#F0EDE8'}}>{CAT_ICON[t.category]||'📌'}</div>
+              <div className="tx-info">
+                <div className="tx-name">{t.title}</div>
+                <div className="tx-cat">{t.category}{t.merchant ? ` · ${t.merchant}` : ''}</div>
+              </div>
+              <div className={`tx-amount ${t.type==='income'?"credit":"debit"}`}>
+                {t.type==='income'?'+':'-'}{fmtINR(t.amount)}
+              </div>
+            </div>
+          ))}
+        </div>
+        {isDesktop && (
+          <div>
+            <div className="card" style={{marginBottom:14}}>
+              <div className="section-title" style={{marginBottom:14}}>Spending by Category</div>
+              {[...transactions.filter(t=>t.type==='expense').reduce((m,t)=>{m.set(t.category,(m.get(t.category)||0)+t.amount);return m;},new Map()).entries()].sort((a,b)=>b[1]-a[1]).slice(0,6).map(([cat,amt],i)=>(
+                <div key={i} style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
+                  <div style={{width:32,height:32,borderRadius:9,background:CAT_COLOR[cat]||'#F0EDE8',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>{CAT_ICON[cat]||'📌'}</div>
+                  <div style={{flex:1}}>
+                    <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
+                      <span style={{fontSize:13,fontWeight:600,color:'var(--text)'}}>{cat}</span>
+                      <span style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>{fmtINR(amt)}</span>
+                    </div>
+                    <div className="progress-track"><div className="progress-fill" style={{width:`${Math.min(100,Math.round((amt/Math.max(...[...transactions.filter(t=>t.type==='expense').reduce((m,t)=>{m.set(t.category,(m.get(t.category)||0)+t.amount);return m;},new Map()).values()]))*100))}%`}}/></div>
+                  </div>
+                </div>
+              ))}
+              {transactions.filter(t=>t.type==='expense').length===0 && <div style={{fontSize:13,color:'var(--text-muted)',textAlign:'center',padding:'20px 0'}}>No expenses yet</div>}
             </div>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
@@ -376,10 +429,64 @@ function GoalsContent({ isDesktop, showToast }) {
       ) : (
         <div className="page-header" style={{paddingTop:16}}><div className="page-title">Goals</div></div>
       )}
+      {isDesktop && (
+        <div className="page-stats-row">
+          {[
+            {label:'Active goals', val:goals.filter(g=>!g.isCompleted).length, color:'var(--text)'},
+            {label:'Completed', val:goals.filter(g=>g.isCompleted).length, color:'var(--green-light)'},
+            {label:'Total saved', val:fmtINR(goals.reduce((s,g)=>s+g.savedAmount,0)), color:'var(--accent)'},
+            {label:'Total target', val:fmtINR(goals.reduce((s,g)=>s+g.targetAmount,0)), color:'var(--text-mid)'},
+          ].map((s,i)=>(
+            <div key={i} className="page-stat-card">
+              <div className="page-stat-card-val" style={{color:s.color}}>{s.val}</div>
+              <div className="page-stat-card-label">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      )}
       <div className={isDesktop?"d-grid-2":"px gap"}>
-        {goals.map(g => <GCard key={g._id} g={g}/>)}
-        {showNew ? <AddForm/> : (
-          <button className="add-goal-btn" onClick={()=>setShowNew(true)}>＋ New Goal</button>
+        <div className={isDesktop?"gap":"gap"}>
+          {goals.map(g => <GCard key={g._id} g={g}/>)}
+          {showNew ? <AddForm/> : (
+            <button className="add-goal-btn" onClick={()=>setShowNew(true)}>＋ New Goal</button>
+          )}
+        </div>
+        {isDesktop && (
+          <div>
+            <div className="card" style={{marginBottom:14}}>
+              <div className="section-title" style={{marginBottom:16}}>Overall Progress</div>
+              {goals.length === 0 ? (
+                <div style={{textAlign:'center',padding:'24px 0',color:'var(--text-muted)',fontSize:13}}>No goals yet — add one!</div>
+              ) : goals.map((g,i)=>(
+                <div key={g._id} style={{marginBottom:16}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                    <span style={{fontSize:14,fontWeight:600,color:'var(--text)'}}>{g.emoji} {g.title}</span>
+                    <span style={{fontSize:13,fontWeight:700,color:'var(--green)'}}>{g.progress ?? pct(g.savedAmount,g.targetAmount)}%</span>
+                  </div>
+                  <div className="progress-track" style={{height:8}}>
+                    <div className="progress-fill" style={{width:`${g.progress ?? pct(g.savedAmount,g.targetAmount)}%`}}/>
+                  </div>
+                  <div style={{display:'flex',justifyContent:'space-between',marginTop:4,fontSize:11,color:'var(--text-muted)'}}>
+                    <span>{fmtINR(g.savedAmount)} saved</span>
+                    <span>{fmtINR(g.targetAmount)} target</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="card">
+              <div className="section-title" style={{marginBottom:12}}>💡 Savings Tips</div>
+              {[
+                {t:'Automate transfers', b:'Set up auto-transfer on payday so you save before you spend.'},
+                {t:'50/30/20 rule', b:'50% needs · 30% wants · 20% savings. A simple framework that works.'},
+                {t:'Celebrate milestones', b:'Every 25% counts. Reward yourself (cheaply!) to stay motivated.'},
+              ].map((tip,i)=>(
+                <div key={i} style={{marginBottom:i<2?12:0,paddingBottom:i<2?12:0,borderBottom:i<2?'1px solid var(--border)':'none'}}>
+                  <div style={{fontSize:13,fontWeight:700,color:'var(--text)',marginBottom:3}}>{tip.t}</div>
+                  <div style={{fontSize:12,color:'var(--text-muted)',lineHeight:1.55}}>{tip.b}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </div>
@@ -437,6 +544,22 @@ function InsightsContent({ isDesktop, showToast }) {
           </div>
         </div>
       ) : (
+        <>
+        {isDesktop && (
+          <div className="page-stats-row">
+            {[
+              {label:'Total spent this month', val:fmtINR(breakdown.reduce((s,b)=>s+b.total,0)), color:'var(--red)'},
+              {label:'Categories tracked', val:breakdown.length, color:'var(--text)'},
+              {label:'Over budget', val:breakdown.filter(b=>b.overLimit).length, color: breakdown.filter(b=>b.overLimit).length>0?'var(--red)':'var(--green-light)'},
+              {label:'Wellness score', val:`${score}/100`, color:'var(--accent)'},
+            ].map((s,i)=>(
+              <div key={i} className="page-stat-card">
+                <div className="page-stat-card-val" style={{color:s.color}}>{s.val}</div>
+                <div className="page-stat-card-label">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        )}
         <div className={isDesktop?"d-grid-2 mb":"px gap"}>
           <div className="wellness-card">
             <div className="wellness-title">Financial Wellness Score</div>
@@ -487,7 +610,31 @@ function InsightsContent({ isDesktop, showToast }) {
               </div>
             </div>
           ))}
+          {isDesktop && breakdown.length > 0 && (
+            <div>
+              <div className="card" style={{marginBottom:14}}>
+                <div className="insight-card-title">Top Spending</div>
+                {breakdown.slice(0,5).map((b,i)=>(
+                  <div key={i} style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
+                    <div style={{width:8,height:8,borderRadius:'50%',background:CHART_COLORS[i%CHART_COLORS.length],flexShrink:0}}/>
+                    <span style={{flex:1,fontSize:13,fontWeight:500,color:'var(--text)'}}>{b.category}</span>
+                    <span style={{fontSize:13,fontWeight:700,color:b.overLimit?'var(--red)':'var(--text)'}}>{fmtINR(b.total)}</span>
+                    {b.overLimit && <span style={{fontSize:10,background:'var(--red-light)',color:'var(--red)',padding:'2px 6px',borderRadius:99,fontWeight:700}}>Over</span>}
+                  </div>
+                ))}
+              </div>
+              <div className="card">
+                <div className="insight-card-title">💡 Money Insights</div>
+                <div style={{fontSize:13,color:'var(--text-muted)',lineHeight:1.7}}>
+                  {breakdown[0] && <p style={{marginBottom:8}}>Your biggest expense is <strong style={{color:'var(--text)'}}>{breakdown[0].category}</strong> at {fmtINR(breakdown[0].total)} this month.</p>}
+                  <p style={{marginBottom:8}}>Set budget limits in the Insights settings to get alerts when you're close to your limit.</p>
+                  <p>Track consistently for 3+ months to see spending trends and personalised recommendations.</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+        </>
       )}
     </div>
   );
@@ -540,45 +687,122 @@ function ReflectContent({ onComplete, isDesktop, showToast }) {
           <div style={{fontSize:26}}>🧘</div>
         </div>
       )}
-      <div className={isDesktop?"":"px"} style={isDesktop?{maxWidth:600,display:"flex",flexDirection:"column",gap:14}:{display:"flex",flexDirection:"column",gap:14}}>
-        {/* New entry */}
-        <div className="card">
-          <div style={{fontFamily:"var(--font-d)",fontSize:15,fontWeight:700,marginBottom:12}}>New Entry</div>
-          <textarea className="reflection-input" placeholder="How did your spending make you feel today? Any wins or regrets?" value={text} onChange={e=>setText(e.target.value)} rows={3}/>
-          <div style={{display:"flex",gap:6,marginBottom:14}}>
-            {MOODS.map(m => (
-              <button key={m} onClick={()=>setMood(m)}
-                style={{flex:1,padding:"8px 4px",borderRadius:"var(--r-xs)",border:`1.5px solid ${mood===m?"var(--green)":"var(--border)"}`,background:mood===m?"var(--green-pale)":"var(--bg)",cursor:"pointer",fontSize:16}}>
-                {MOOD_EMOJI[m]}
-              </button>
-            ))}
-          </div>
-          <button className="btn-primary" onClick={submit} disabled={saving||!text.trim()} style={isDesktop?{maxWidth:200}:{}}>
-            {saving?'Saving…':'Save Entry'}
-          </button>
-        </div>
-
-        {/* Past entries */}
-        {reflections.map(r => (
-          <div key={r._id} className="card">
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-              <div style={{fontSize:13,fontWeight:600,color:"var(--text-muted)"}}>
-                {new Date(r.date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}
+      {/* Desktop: two-column layout */}
+      {isDesktop ? (
+        <div className="d-grid-2">
+          {/* Left: new entry + past entries */}
+          <div style={{display:'flex',flexDirection:'column',gap:14}}>
+            <div className="card">
+              <div style={{fontFamily:"var(--font-d)",fontSize:15,fontWeight:700,marginBottom:12}}>✍️ New Entry</div>
+              <textarea className="reflection-input" placeholder="How did your spending make you feel today? Any wins or regrets?" value={text} onChange={e=>setText(e.target.value)} rows={4}/>
+              <div style={{display:"flex",gap:6,marginBottom:14,marginTop:8}}>
+                {MOODS.map(m => (
+                  <button key={m} onClick={()=>setMood(m)}
+                    style={{flex:1,padding:"10px 4px",borderRadius:"var(--r-xs)",border:`1.5px solid ${mood===m?"var(--green)":"var(--border)"}`,background:mood===m?"var(--green-pale)":"var(--surface)",cursor:"pointer",fontSize:18,transition:'all 0.15s'}}>
+                    {MOOD_EMOJI[m]}
+                  </button>
+                ))}
               </div>
-              <span style={{fontSize:18}}>{MOOD_EMOJI[r.mood]}</span>
+              <div style={{fontSize:11,color:'var(--text-muted)',marginBottom:10}}>Mood: {mood.charAt(0).toUpperCase()+mood.slice(1)}</div>
+              <button className="btn-primary" onClick={submit} disabled={saving||!text.trim()}>
+                {saving?'Saving…':'Save Entry ✓'}
+              </button>
             </div>
-            <div style={{fontSize:13,lineHeight:1.6,color:"var(--text)"}}>{r.content}</div>
+            {reflections.map(r => (
+              <div key={r._id} className="card">
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                  <div style={{fontSize:13,fontWeight:600,color:"var(--text-muted)"}}>
+                    {new Date(r.date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}
+                  </div>
+                  <span style={{fontSize:18}}>{MOOD_EMOJI[r.mood]}</span>
+                </div>
+                <div style={{fontSize:13,lineHeight:1.7,color:"var(--text)"}}>{r.content}</div>
+              </div>
+            ))}
+            {reflections.length === 0 && (
+              <div className="empty-state">
+                <div className="empty-icon">📓</div>
+                <div className="empty-title">No entries yet</div>
+                <div>Write your first reflection above</div>
+              </div>
+            )}
           </div>
-        ))}
-
-        {reflections.length === 0 && (
-          <div className="empty-state">
-            <div className="empty-icon">📓</div>
-            <div className="empty-title">No entries yet</div>
-            <div>Write your first reflection above</div>
+          {/* Right: prompts + mood stats */}
+          <div style={{display:'flex',flexDirection:'column',gap:14}}>
+            <div className="card">
+              <div style={{fontFamily:'var(--font-d)',fontSize:15,fontWeight:700,marginBottom:14}}>💭 Reflection Prompts</div>
+              {[
+                {q:'What was your best money decision this week?', icon:'✅'},
+                {q:'Where do you think you overspent?', icon:'💸'},
+                {q:'What is one money habit you want to build?', icon:'🎯'},
+                {q:'Did any purchase make you feel guilty? Why?', icon:'🤔'},
+                {q:'What would you tell your future self about money?', icon:'📬'},
+              ].map((p,i)=>(
+                <div key={i} onClick={()=>setText(prev=>prev?prev+' '+p.q:p.q)}
+                  style={{display:'flex',alignItems:'flex-start',gap:10,padding:'10px 12px',borderRadius:'var(--r-xs)',background:'var(--bg)',marginBottom:6,cursor:'pointer',border:'1px solid var(--border)',transition:'all 0.15s'}}
+                  onMouseEnter={e=>e.currentTarget.style.background='var(--green-pale)'}
+                  onMouseLeave={e=>e.currentTarget.style.background='var(--bg)'}>
+                  <span style={{fontSize:16,flexShrink:0}}>{p.icon}</span>
+                  <span style={{fontSize:12,color:'var(--text-mid)',lineHeight:1.5}}>{p.q}</span>
+                </div>
+              ))}
+              <div style={{fontSize:11,color:'var(--text-muted)',marginTop:6}}>Click any prompt to add it to your entry</div>
+            </div>
+            <div className="card">
+              <div style={{fontFamily:'var(--font-d)',fontSize:15,fontWeight:700,marginBottom:14}}>📈 Mood History</div>
+              {reflections.length === 0 ? (
+                <div style={{fontSize:13,color:'var(--text-muted)',textAlign:'center',padding:'16px 0'}}>No entries yet</div>
+              ) : (
+                <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+                  {reflections.slice(0,12).map((r,i)=>(
+                    <div key={i} title={new Date(r.date).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}
+                      style={{width:36,height:36,borderRadius:10,background:'var(--bg)',border:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,cursor:'default'}}>
+                      {MOOD_EMOJI[r.mood]}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        /* Mobile layout */
+        <div className="px" style={{display:'flex',flexDirection:'column',gap:14}}>
+          <div className="card">
+            <div style={{fontFamily:"var(--font-d)",fontSize:15,fontWeight:700,marginBottom:12}}>New Entry</div>
+            <textarea className="reflection-input" placeholder="How did your spending make you feel today? Any wins or regrets?" value={text} onChange={e=>setText(e.target.value)} rows={3}/>
+            <div style={{display:"flex",gap:6,marginBottom:14,marginTop:8}}>
+              {MOODS.map(m => (
+                <button key={m} onClick={()=>setMood(m)}
+                  style={{flex:1,padding:"8px 4px",borderRadius:"var(--r-xs)",border:`1.5px solid ${mood===m?"var(--green)":"var(--border)"}`,background:mood===m?"var(--green-pale)":"var(--bg)",cursor:"pointer",fontSize:16}}>
+                  {MOOD_EMOJI[m]}
+                </button>
+              ))}
+            </div>
+            <button className="btn-primary" onClick={submit} disabled={saving||!text.trim()}>
+              {saving?'Saving…':'Save Entry'}
+            </button>
+          </div>
+          {reflections.map(r => (
+            <div key={r._id} className="card">
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                <div style={{fontSize:13,fontWeight:600,color:"var(--text-muted)"}}>
+                  {new Date(r.date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}
+                </div>
+                <span style={{fontSize:18}}>{MOOD_EMOJI[r.mood]}</span>
+              </div>
+              <div style={{fontSize:13,lineHeight:1.6,color:"var(--text)"}}>{r.content}</div>
+            </div>
+          ))}
+          {reflections.length === 0 && (
+            <div className="empty-state">
+              <div className="empty-icon">📓</div>
+              <div className="empty-title">No entries yet</div>
+              <div>Write your first reflection above</div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -110,11 +110,27 @@ const AUTH_CSS = `
 
 export default function AuthScreen() {
   const { login, register } = useAuth();
-  const [mode, setMode]   = useState('login');
-  const [form, setForm]   = useState({ name:'', email:'', password:'', monthlyIncome:'', currency:'INR' });
-  const [err,  setErr]    = useState('');
-  const [info, setInfo]   = useState('');
-  const [busy, setBusy]   = useState(false);
+  const [mode,    setMode]    = useState('login');
+  const [form,    setForm]    = useState({ name:'', email:'', password:'', monthlyIncome:'', currency:'INR' });
+  const [err,     setErr]     = useState('');
+  const [info,    setInfo]    = useState('');
+  const [busy,    setBusy]    = useState(false);
+  const [showPwd, setShowPwd] = useState(false);
+
+  function pwdStrength(pw) {
+    if (!pw) return null;
+    let score = 0;
+    if (pw.length >= 8)  score++;
+    if (pw.length >= 12) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    if (score <= 1) return { label:'Weak', color:'#E05555', width:'25%' };
+    if (score <= 2) return { label:'Fair', color:'#E8A030', width:'50%' };
+    if (score <= 3) return { label:'Good', color:'#4A8C6A', width:'75%' };
+    return { label:'Strong', color:'#2D8A5A', width:'100%' };
+  }
+  const strength = mode === 'register' ? pwdStrength(form.password) : null;
 
   function set(field) { return e => setForm(f => ({ ...f, [field]: e.target.value })); }
 
@@ -137,7 +153,7 @@ export default function AuthScreen() {
 
   function handleSocial(provider) {
     setErr('');
-    setInfo(`${provider} sign-in requires OAuth setup in your backend. Use email for now.`);
+    setInfo(`${provider} OAuth requires configuring a client ID in your backend (.env). See docs: passport.js + ${provider.toLowerCase()}-oauth20`);
   }
 
   return (
@@ -186,28 +202,33 @@ export default function AuthScreen() {
             <div className="auth-title">{mode==='login'?'Welcome back 👋':'Create account 🎯'}</div>
             <div className="auth-subtitle">{mode==='login'?'Sign in to continue to your dashboard':'Start your financial journey today — free forever'}</div>
 
-            {/* Social */}
-            <div className="social-row">
-              <button className="social-btn" onClick={()=>handleSocial('Google')}>
-                <svg width="17" height="17" viewBox="0 0 48 48">
-                  <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.6 32.9 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/>
-                  <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
-                  <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.5 26.8 36.5 24 36.5c-5.2 0-9.5-3.1-11.2-7.5l-6.5 5C9.7 39.7 16.3 44 24 44z"/>
-                  <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.7l6.2 5.2C41.3 36.2 44 30.5 44 24c0-1.3-.1-2.6-.4-3.9z"/>
-                </svg>
-                Google
-              </button>
-              <button className="social-btn" onClick={()=>handleSocial('Apple')}>
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.54 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701z"/>
-                </svg>
-                Apple
-              </button>
+            {/* Social auth */}
+            <div style={{marginBottom:18}}>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
+                <button className="social-btn" onClick={()=>handleSocial('Google')} style={{opacity:0.7}}>
+                  <svg width="17" height="17" viewBox="0 0 48 48">
+                    <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.6 32.9 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/>
+                    <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+                    <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.5 26.8 36.5 24 36.5c-5.2 0-9.5-3.1-11.2-7.5l-6.5 5C9.7 39.7 16.3 44 24 44z"/>
+                    <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.7l6.2 5.2C41.3 36.2 44 30.5 44 24c0-1.3-.1-2.6-.4-3.9z"/>
+                  </svg>
+                  Google
+                </button>
+                <button className="social-btn" onClick={()=>handleSocial('Apple')} style={{opacity:0.7}}>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.54 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701z"/>
+                  </svg>
+                  Apple
+                </button>
+              </div>
+              <div style={{background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:'var(--r-xs)',padding:'9px 12px',fontSize:11,color:'var(--text-muted)',lineHeight:1.5}}>
+                🔧 <strong style={{color:'var(--text-mid)'}}>OAuth not yet configured.</strong> To enable Google/Apple sign-in, add <code style={{background:'var(--border)',padding:'1px 4px',borderRadius:4,fontSize:10}}>GOOGLE_CLIENT_ID</code> to your backend .env and install <code style={{background:'var(--border)',padding:'1px 4px',borderRadius:4,fontSize:10}}>passport-google-oauth20</code>.
+              </div>
             </div>
 
             <div className="auth-divider">
               <div className="auth-divider-line"/>
-              <div className="auth-divider-text">or with email</div>
+              <div className="auth-divider-text">sign in with email</div>
               <div className="auth-divider-line"/>
             </div>
 
@@ -222,10 +243,21 @@ export default function AuthScreen() {
                 <span className="auth-input-icon">✉️</span>
                 <input className="auth-input" type="email" placeholder="Email address" value={form.email} onChange={set('email')} required/>
               </div>
-              <div className="auth-input-wrap">
+              <div className="auth-input-wrap" style={{marginBottom: strength ? 6 : 12}}>
                 <span className="auth-input-icon">🔒</span>
-                <input className="auth-input" type="password" placeholder={mode==='login'?'Password':'Password (min. 6 chars)'} value={form.password} onChange={set('password')} required minLength={6}/>
+                <input className="auth-input" type={showPwd?'text':'password'} placeholder={mode==='login'?'Password':'Password (min. 6 chars)'} value={form.password} onChange={set('password')} required minLength={6} style={{paddingRight:44}}/>
+                <button type="button" onClick={()=>setShowPwd(v=>!v)} style={{position:'absolute',right:12,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--text-muted)',padding:4,lineHeight:1}}>
+                  {showPwd ? '🙈' : '👁️'}
+                </button>
               </div>
+              {strength && (
+                <div style={{marginBottom:12}}>
+                  <div style={{height:3,borderRadius:99,background:'var(--border)',overflow:'hidden',marginBottom:4}}>
+                    <div style={{height:'100%',width:strength.width,background:strength.color,borderRadius:99,transition:'all 0.3s'}}/>
+                  </div>
+                  <div style={{fontSize:11,fontWeight:600,color:strength.color}}>{strength.label} password</div>
+                </div>
+              )}
               {mode==='register' && (
                 <div className="auth-income-row">
                   <div className="auth-input-wrap" style={{marginBottom:12}}>

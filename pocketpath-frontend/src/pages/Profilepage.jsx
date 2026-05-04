@@ -65,9 +65,12 @@ const PROFILE_CSS = `
 /* Sub-pages */
 .subpage { position: fixed; inset: 0; z-index: 200; background: var(--bg); animation: fadeInScale 0.25s ease; overflow-y: auto; }
 @media (min-width: 768px) {
-  .subpage { position: absolute; border-radius: var(--r); box-shadow: var(--shadow-lg); border: 1px solid var(--border); max-width: 560px; margin: 0 auto; left: 0; right: 0; top: 0; bottom: auto; min-height: 400px; }
+  .subpage { position: static; border-radius: 0; box-shadow: none; border: none; max-width: none; min-height: auto; }
 }
-.subpage-header { display: flex; align-items: center; gap: 14px; padding: 18px 20px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 1; }
+.subpage-header { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 1; }
+@media (min-width: 768px) {
+  .subpage-header { position: static; border-radius: var(--r) var(--r) 0 0; }
+}
 .subpage-back { width: 36px; height: 36px; border-radius: 11px; background: var(--bg2); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; transition: background 0.15s; }
 .subpage-back:hover { background: var(--border); }
 .subpage-title { font-family: var(--font-d); font-size: 18px; font-weight: 800; }
@@ -329,7 +332,7 @@ function EditProfileModal({ profile, onClose, onSave }) {
 
 /* ── MAIN PROFILE COMPONENT ─────────────────────────────── */
 export default function ProfileContent({ isDesktop, showToast }) {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const [profile,    setProfile]  = useState(null);
   const [loading,    setLoading]  = useState(true);
   const [subPage,    setSubPage]  = useState(null);  // 'notifications'|'export'|'help'|'privacy'
@@ -349,22 +352,37 @@ export default function ProfileContent({ isDesktop, showToast }) {
   function handleAvatarChange(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const url = ev.target.result;
+    // Compress image before storing (resize to max 200x200)
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const canvas = document.createElement('canvas');
+      const MAX = 200;
+      const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+      canvas.width  = img.width  * ratio;
+      canvas.height = img.height * ratio;
+      const ctx2 = canvas.getContext('2d');
+      ctx2.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const url = canvas.toDataURL('image/jpeg', 0.85);
       setAvatarUrl(url);
-      profileApi.update({ ...profile, avatar: url })
-        .then(res => setProfile(res.user))
+      // Update header avatar immediately via context
+      updateUser({ avatar: url });
+      // Persist to backend
+      profileApi.update({ ...(profile || {}), avatar: url })
+        .then(res => { setProfile(res.user); })
         .catch(() => {});
       showToast('✓ Avatar updated!');
     };
-    reader.readAsDataURL(file);
+    img.src = objectUrl;
   }
 
   async function handleSaveProfile(form) {
     try {
       const res = await profileApi.update(form);
       setProfile(res.user);
+      // Sync name/email to header instantly
+      updateUser({ name: res.user.name, email: res.user.email, monthlyIncome: res.user.monthlyIncome, currency: res.user.currency });
       setShowEdit(false);
       showToast('✓ Profile updated!');
     } catch (e) {
@@ -384,111 +402,185 @@ export default function ProfileContent({ isDesktop, showToast }) {
   if (subPage === 'help')          return <HelpPage onBack={() => setSubPage(null)}/>;
   if (subPage === 'privacy')       return <PrivacyPage onBack={() => setSubPage(null)}/>;
 
+  const SETTINGS_ROWS = [
+    { icon:'🔔', bg:'#FDE8D8', label:'Notifications',    sub:'Daily summaries & goal alerts',   action:'notifications' },
+    { icon:'📤', bg:'#E8F4E8', label:'Export Data',       sub:'PDF, CSV, JSON backup',           action:'export' },
+    { icon:'🔒', bg:'#E8F0FD', label:'Privacy & Security',sub:'Password, sessions, 2FA',         action:'privacy' },
+    { icon:'❓', bg:'#D4E8DC', label:'Help & Support',    sub:'FAQ, contact & docs',             action:'help' },
+  ];
+
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: PROFILE_CSS }}/>
-      <div className={`profile-page ${isDesktop?'':'px'}`} style={isDesktop?{maxWidth:580}:{}}>
+      <input ref={fileRef} type="file" accept="image/*" style={{ display:'none' }} onChange={handleAvatarChange}/>
 
-        {/* Hidden file input */}
-        <input ref={fileRef} type="file" accept="image/*" style={{ display:'none' }} onChange={handleAvatarChange}/>
-
-        {/* Hero */}
-        <div className="profile-hero">
-          <div className="profile-avatar-wrap">
-            <div className="profile-avatar" onClick={handleAvatarClick}>
-              {avatarUrl ? <img src={avatarUrl} alt="avatar"/> : initial}
-            </div>
-            <div className="profile-avatar-edit" onClick={handleAvatarClick}>📷</div>
+      {isDesktop ? (
+        /* ── DESKTOP: full-width two-column ── */
+        <div className="profile-page">
+          {/* Page title */}
+          <div style={{marginBottom:24}}>
+            <div style={{fontFamily:'var(--font-d)',fontSize:30,fontWeight:800,color:'var(--text)'}}>Profile</div>
+            <div style={{fontSize:13,color:'var(--text-muted)',marginTop:4}}>Manage your account, preferences and data</div>
           </div>
-          <div className="profile-name">{p?.name}</div>
-          <div className="profile-email">{p?.email}</div>
-          <div className="profile-badge">
-            <span>💎</span>
-            <span>Member since {new Date(p?.createdAt||Date.now()).toLocaleDateString('en-IN',{month:'short',year:'numeric'})}</span>
-          </div>
-          <div className="profile-stats">
-            {[
-              { val: p?.currency||'INR', label: 'Currency' },
-              { val: p?.monthlyIncome ? `₹${(p.monthlyIncome/1000).toFixed(0)}K` : '—', label: 'Monthly Income' },
-              { val: `${p?.streak||0} 🔥`, label: 'Day Streak' },
-            ].map((s,i) => (
-              <div key={i} className="profile-stat">
-                <div className="profile-stat-val">{s.val}</div>
-                <div className="profile-stat-label">{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Edit button */}
-        <button className="btn-primary" style={{ background:'var(--green-pale)', color:'var(--green)', marginBottom:16, fontWeight:700 }} onClick={() => setShowEdit(true)}>
-          ✏️ Edit Profile
-        </button>
+          <div style={{display:'grid',gridTemplateColumns:'340px 1fr',gap:24,alignItems:'start'}}>
 
-        {/* Settings sections */}
-        <div className="settings-section">
-          <div className="settings-section-title">Preferences</div>
-          <div className="settings-card">
-            {[
-              { icon:'🔔', bg:'#FDE8D8', label:'Notifications', sub:'Daily summaries, goal alerts', action:'notifications' },
-              { icon:'📤', bg:'#E8F4E8', label:'Export Data',   sub:'PDF, CSV, JSON backup',       action:'export' },
-            ].map(r => (
-              <div key={r.action} className="settings-row" onClick={() => setSubPage(r.action)}>
-                <div className="settings-row-icon" style={{ background:r.bg }}>{r.icon}</div>
-                <div className="settings-row-content">
-                  <div className="settings-row-label">{r.label}</div>
-                  <div className="settings-row-sub">{r.sub}</div>
+            {/* LEFT column — avatar card + settings list */}
+            <div style={{display:'flex',flexDirection:'column',gap:16}}>
+
+              {/* Avatar & identity card */}
+              <div className="profile-hero">
+                <div className="profile-avatar-wrap">
+                  <div className="profile-avatar" onClick={handleAvatarClick} style={{width:90,height:90,fontSize:36,borderRadius:26}}>
+                    {avatarUrl ? <img src={avatarUrl} alt="avatar"/> : initial}
+                  </div>
+                  <div className="profile-avatar-edit" onClick={handleAvatarClick} title="Upload photo">📷</div>
                 </div>
-                <div className="settings-chevron">›</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="settings-section">
-          <div className="settings-section-title">Account</div>
-          <div className="settings-card">
-            {[
-              { icon:'🔒', bg:'#E8F0FD', label:'Privacy & Security', sub:'Password, sessions, 2FA',  action:'privacy' },
-              { icon:'❓', bg:'#D4E8DC', label:'Help & Support',      sub:'FAQ, contact us, docs',    action:'help' },
-            ].map(r => (
-              <div key={r.action} className="settings-row" onClick={() => setSubPage(r.action)}>
-                <div className="settings-row-icon" style={{ background:r.bg }}>{r.icon}</div>
-                <div className="settings-row-content">
-                  <div className="settings-row-label">{r.label}</div>
-                  <div className="settings-row-sub">{r.sub}</div>
+                <div className="profile-name" style={{fontSize:24}}>{p?.name}</div>
+                <div className="profile-email">{p?.email}</div>
+                <div className="profile-badge">
+                  <span>💎</span>
+                  <span>Member since {new Date(p?.createdAt||Date.now()).toLocaleDateString('en-IN',{month:'short',year:'numeric'})}</span>
                 </div>
-                <div className="settings-chevron">›</div>
+                <div className="profile-stats">
+                  {[
+                    { val: p?.currency||'INR',   label: 'Currency' },
+                    { val: p?.monthlyIncome ? `₹${(p.monthlyIncome/1000).toFixed(0)}K` : '—', label: 'Income/mo' },
+                    { val: `${p?.streak||0} 🔥`, label: 'Streak' },
+                  ].map((s,i) => (
+                    <div key={i} className="profile-stat">
+                      <div className="profile-stat-val">{s.val}</div>
+                      <div className="profile-stat-label">{s.label}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
 
-        <div className="settings-section">
-          <div className="settings-section-title">About</div>
-          <div className="settings-card">
-            <div className="settings-row">
-              <div className="settings-row-icon" style={{ background:'#EDE8F8' }}>⚡</div>
-              <div className="settings-row-content">
-                <div className="settings-row-label">PocketPath</div>
-                <div className="settings-row-sub">Version 1.0.0 · Built with ❤️</div>
+              <button className="btn-primary" style={{background:'var(--green-pale)',color:'var(--green)',fontWeight:700}} onClick={()=>setShowEdit(true)}>
+                ✏️ Edit Profile
+              </button>
+              <button className="btn-primary" style={{background:'var(--red-light)',color:'var(--red)',border:'1px solid rgba(201,64,64,0.15)'}} onClick={logout}>
+                Sign Out
+              </button>
+            </div>
+
+            {/* RIGHT column — settings panels */}
+            <div style={{display:'flex',flexDirection:'column',gap:20}}>
+
+              {/* Settings nav cards in 2×2 grid */}
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
+                {SETTINGS_ROWS.map(r => (
+                  <div key={r.action} onClick={()=>setSubPage(r.action)}
+                    style={{background:'var(--surface)',borderRadius:'var(--r)',padding:'18px 20px',boxShadow:'var(--shadow)',border:'1px solid var(--border)',cursor:'pointer',transition:'all 0.15s',display:'flex',flexDirection:'column',gap:10}}
+                    onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='var(--shadow-lg)';}}
+                    onMouseLeave={e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='var(--shadow)';}}>
+                    <div style={{width:44,height:44,borderRadius:13,background:r.bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>{r.icon}</div>
+                    <div>
+                      <div style={{fontFamily:'var(--font-d)',fontSize:15,fontWeight:700,color:'var(--text)'}}>{r.label}</div>
+                      <div style={{fontSize:12,color:'var(--text-muted)',marginTop:3}}>{r.sub}</div>
+                    </div>
+                    <div style={{fontSize:12,color:'var(--green)',fontWeight:600,marginTop:'auto'}}>Open →</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Inline content area for sub-pages on desktop */}
+              {subPage && (
+                <div style={{background:'var(--surface)',borderRadius:'var(--r)',border:'1px solid var(--border)',boxShadow:'var(--shadow)',overflow:'hidden'}}>
+                  {subPage==='notifications' && <NotificationsPage onBack={()=>setSubPage(null)}/>}
+                  {subPage==='export'        && <ExportPage        onBack={()=>setSubPage(null)} showToast={showToast}/>}
+                  {subPage==='help'          && <HelpPage          onBack={()=>setSubPage(null)}/>}
+                  {subPage==='privacy'       && <PrivacyPage       onBack={()=>setSubPage(null)}/>}
+                </div>
+              )}
+
+              {/* App info */}
+              <div style={{background:'var(--surface)',borderRadius:'var(--r)',padding:'16px 20px',border:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <div style={{width:36,height:36,borderRadius:10,background:'#EDE8F8',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>⚡</div>
+                  <div>
+                    <div style={{fontSize:14,fontWeight:600,color:'var(--text)'}}>PocketPath v1.0.0</div>
+                    <div style={{fontSize:11,color:'var(--text-muted)'}}>Built with ❤️ for young professionals</div>
+                  </div>
+                </div>
+                <div style={{fontSize:11,background:'var(--green-pale)',color:'var(--green)',padding:'4px 10px',borderRadius:99,fontWeight:700}}>Latest</div>
               </div>
             </div>
           </div>
         </div>
 
-        <button
-          className="btn-primary"
-          style={{ background:'var(--red-light)', color:'var(--red)', marginTop:4, marginBottom:40, border:'1px solid rgba(201,64,64,0.15)' }}
-          onClick={logout}>
-          Sign Out
-        </button>
-      </div>
+      ) : (
+        /* ── MOBILE: single column ── */
+        <div className="profile-page px">
+          <div className="profile-hero" style={{marginBottom:14}}>
+            <div className="profile-avatar-wrap">
+              <div className="profile-avatar" onClick={handleAvatarClick}>
+                {avatarUrl ? <img src={avatarUrl} alt="avatar"/> : initial}
+              </div>
+              <div className="profile-avatar-edit" onClick={handleAvatarClick}>📷</div>
+            </div>
+            <div className="profile-name">{p?.name}</div>
+            <div className="profile-email">{p?.email}</div>
+            <div className="profile-badge">
+              <span>💎</span>
+              <span>Member since {new Date(p?.createdAt||Date.now()).toLocaleDateString('en-IN',{month:'short',year:'numeric'})}</span>
+            </div>
+            <div className="profile-stats">
+              {[
+                { val: p?.currency||'INR', label: 'Currency' },
+                { val: p?.monthlyIncome ? `₹${(p.monthlyIncome/1000).toFixed(0)}K` : '—', label: 'Income/mo' },
+                { val: `${p?.streak||0} 🔥`, label: 'Streak' },
+              ].map((s,i) => (
+                <div key={i} className="profile-stat">
+                  <div className="profile-stat-val">{s.val}</div>
+                  <div className="profile-stat-label">{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <button className="btn-primary" style={{background:'var(--green-pale)',color:'var(--green)',marginBottom:14,fontWeight:700}} onClick={()=>setShowEdit(true)}>
+            ✏️ Edit Profile
+          </button>
+
+          <div className="settings-section">
+            <div className="settings-section-title">Settings</div>
+            <div className="settings-card">
+              {SETTINGS_ROWS.map(r => (
+                <div key={r.action} className="settings-row" onClick={()=>setSubPage(r.action)}>
+                  <div className="settings-row-icon" style={{background:r.bg}}>{r.icon}</div>
+                  <div className="settings-row-content">
+                    <div className="settings-row-label">{r.label}</div>
+                    <div className="settings-row-sub">{r.sub}</div>
+                  </div>
+                  <div className="settings-chevron">›</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="settings-section">
+            <div className="settings-card">
+              <div className="settings-row">
+                <div className="settings-row-icon" style={{background:'#EDE8F8'}}>⚡</div>
+                <div className="settings-row-content">
+                  <div className="settings-row-label">PocketPath</div>
+                  <div className="settings-row-sub">Version 1.0.0 · Built with ❤️</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button className="btn-primary" style={{background:'var(--red-light)',color:'var(--red)',marginTop:4,marginBottom:40,border:'1px solid rgba(201,64,64,0.15)'}} onClick={logout}>
+            Sign Out
+          </button>
+        </div>
+      )}
 
       {showEdit && (
         <EditProfileModal
           profile={p}
-          onClose={() => setShowEdit(false)}
+          onClose={()=>setShowEdit(false)}
           onSave={handleSaveProfile}
         />
       )}

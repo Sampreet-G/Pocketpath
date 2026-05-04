@@ -23,3 +23,9 @@ createRoot(document.getElementById('root')).render(
     </AuthProvider>
   </StrictMode>,
 )
+const params = new URLSearchParams(window.location.search);
+const oauthToken = params.get('token');
+if (oauthToken) {
+  localStorage.setItem('pp_token', oauthToken);
+  window.history.replaceState({}, '', '/');
+}

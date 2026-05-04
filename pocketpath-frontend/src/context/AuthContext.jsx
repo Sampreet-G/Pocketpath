@@ -5,14 +5,13 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user,    setUser]    = useState(null);
-  const [loading, setLoading] = useState(true); // checking saved token on boot
+  const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState(null);
 
-  // On mount — restore session from localStorage
+  // Restore session from localStorage on mount
   useEffect(() => {
     const token = localStorage.getItem('pp_token');
     if (!token) { setLoading(false); return; }
-
     authApi.me()
       .then(data => setUser(data.user))
       .catch(() => {
@@ -46,8 +45,18 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
+  // Call this whenever profile is updated (name, avatar, etc.)
+  // so the header avatar/name updates instantly
+  const updateUser = useCallback((updates) => {
+    setUser(prev => {
+      const next = { ...prev, ...updates };
+      localStorage.setItem('pp_user', JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, loading, error, setError, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, error, setError, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

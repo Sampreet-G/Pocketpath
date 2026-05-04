@@ -191,30 +191,43 @@ const ONBOARDING_CSS = `
   .onboard-wrap { align-items: center; }
 }
 .onboard-sheet {
-  width: 100%; max-width: 480px; border-radius: 32px 32px 0 0;
-  overflow: hidden; animation: onboardIn 0.4s cubic-bezier(.4,0,.2,1);
+  width: 100%; max-width: 520px;
+  border-radius: 32px 32px 0 0;
+  display: flex; flex-direction: column;
+  animation: onboardIn 0.4s cubic-bezier(.4,0,.2,1);
+  max-height: 96vh; overflow: hidden;
 }
 @media (min-width: 768px) {
-  .onboard-sheet { border-radius: 32px; max-height: 90vh; }
+  .onboard-sheet { border-radius: 32px; max-height: 88vh; }
 }
+.onboard-scrollable {
+  flex: 1; overflow-y: auto; min-height: 0;
+}
+.onboard-scrollable::-webkit-scrollbar { display: none; }
 .onboard-hero {
-  padding: 40px 32px 32px; display: flex; flex-direction: column;
-  align-items: center; text-align: center; min-height: 360px; justify-content: center;
+  padding: 32px 28px 20px; display: flex; flex-direction: column;
+  align-items: center; text-align: center;
 }
-.onboard-emoji { font-size: 56px; margin-bottom: 20px; display: block; animation: onboardIn 0.5s ease; }
-.onboard-title { font-family: var(--font-d); font-size: 28px; font-weight: 800; color: #fff; line-height: 1.2; margin-bottom: 12px; white-space: pre-line; }
-.onboard-body  { font-size: 14px; opacity: 0.65; line-height: 1.75; max-width: 320px; }
-.onboard-visual { padding: 0 24px 28px; }
-.onboard-footer { background: rgba(0,0,0,0.2); padding: 20px 24px 32px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.onboard-emoji { font-size: 52px; margin-bottom: 16px; display: block; }
+.onboard-title { font-family: var(--font-d); font-size: 26px; font-weight: 800; color: #fff; line-height: 1.2; margin-bottom: 10px; white-space: pre-line; }
+.onboard-body  { font-size: 14px; opacity: 0.65; line-height: 1.7; max-width: 320px; }
+.onboard-visual { padding: 0 20px 16px; }
+.onboard-footer {
+  flex-shrink: 0;
+  background: rgba(0,0,0,0.25);
+  padding: 16px 24px 24px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
 .onboard-dots { display: flex; gap: 6px; }
-.onboard-dot { width: 6px; height: 6px; border-radius: 99px; background: rgba(255,255,255,0.25); transition: all 0.3s; }
+.onboard-dot { width: 6px; height: 6px; border-radius: 99px; background: rgba(255,255,255,0.25); transition: all 0.3s; cursor: pointer; }
 .onboard-dot.active { background: #fff; width: 20px; }
-.onboard-skip { font-size: 13px; color: rgba(255,255,255,0.5); cursor: pointer; padding: 8px 12px; border-radius: 8px; border: none; background: none; transition: color 0.2s; }
-.onboard-skip:hover { color: rgba(255,255,255,0.85); }
-.onboard-next { padding: 13px 28px; border-radius: 14px; border: none; background: rgba(255,255,255,0.15); color: #fff; font-family: var(--font-b); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.2); }
+.onboard-skip { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.5); cursor: pointer; padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.07); transition: all 0.2s; white-space: nowrap; }
+.onboard-skip:hover { color: #fff; background: rgba(255,255,255,0.12); }
+.onboard-next { padding: 12px 24px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.15); color: #fff; font-family: var(--font-b); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
 .onboard-next:hover { background: rgba(255,255,255,0.22); transform: translateY(-1px); }
-.onboard-next.final { background: #fff; color: #1a3c2e; }
-.onboard-next.final:hover { background: #f0f0f0; }
+.onboard-next.final { background: #fff; color: #1a3c2e; border-color: #fff; }
+.onboard-next.final:hover { background: #f0f8f0; }
 `;
 
 export default function OnboardingDemo({ onDone }) {
@@ -241,12 +254,14 @@ export default function OnboardingDemo({ onDone }) {
       <style dangerouslySetInnerHTML={{ __html: ONBOARDING_CSS }}/>
       <div className="onboard-wrap">
         <div className="onboard-sheet" style={{ background: s.color }}>
-          <div className="onboard-hero">
-            <span className="onboard-emoji" key={slide}>{s.emoji}</span>
-            <div className="onboard-title">{s.title}</div>
-            <div className="onboard-body">{s.body}</div>
+          <div className="onboard-scrollable">
+            <div className="onboard-hero">
+              <span className="onboard-emoji" key={slide}>{s.emoji}</span>
+              <div className="onboard-title">{s.title}</div>
+              <div className="onboard-body">{s.body}</div>
+            </div>
+            <div className="onboard-visual">{renderVisual()}</div>
           </div>
-          <div className="onboard-visual">{renderVisual()}</div>
           <div className="onboard-footer">
             <button className="onboard-skip" onClick={onDone}>Skip</button>
             <div className="onboard-dots">
