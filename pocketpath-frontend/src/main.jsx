@@ -4,6 +4,12 @@ import './index.css'
 import App from './App.jsx'
 import AuthScreen from './pages/AuthScreen.jsx'
 import { AuthProvider, useAuth } from './context/AuthContext.jsx'
+const oauthParams = new URLSearchParams(window.location.search);
+const oauthToken = oauthParams.get('token');
+if (oauthToken) {
+  localStorage.setItem('pp_token', oauthToken);
+  window.history.replaceState({}, '', '/');
+}
 
 function Root() {
   const { user, loading } = useAuth()
@@ -23,9 +29,3 @@ createRoot(document.getElementById('root')).render(
     </AuthProvider>
   </StrictMode>,
 )
-const params = new URLSearchParams(window.location.search);
-const oauthToken = params.get('token');
-if (oauthToken) {
-  localStorage.setItem('pp_token', oauthToken);
-  window.history.replaceState({}, '', '/');
-}

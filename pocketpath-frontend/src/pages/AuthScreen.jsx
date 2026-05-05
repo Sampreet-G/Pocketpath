@@ -205,7 +205,7 @@ export default function AuthScreen() {
             {/* Social auth */}
             <div style={{marginBottom:18}}>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
-                <button className="social-btn" onClick={()=>handleSocial('Google')} style={{opacity:0.7}}>
+                <button className="social-btn" onClick={()=> window.location.href = 'http://localhost:5000/api/auth/google'} style={{opacity:0.7}}>
                   <svg width="17" height="17" viewBox="0 0 48 48">
                     <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.6 32.9 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/>
                     <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
