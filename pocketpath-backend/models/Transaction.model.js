@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const CATEGORIES = [
   'Food',
+  'Groceries',
   'Travel',
   'Shopping',
   'Entertainment',

@@ -3,285 +3,641 @@ import { useAuth } from '../context/AuthContext';
 import { profileApi } from '../api';
 
 const PROFILE_CSS = `
-@keyframes slideInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-@keyframes fadeInScale { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
+@keyframes slideInUp   { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeInScale { from { opacity:0; transform:scale(0.95); }      to { opacity:1; transform:scale(1); } }
+@keyframes fadeIn      { from { opacity:0; }                              to { opacity:1; } }
+@keyframes progressFill{ from { width:0; }                                to { width:var(--pw); } }
 
 .profile-page { animation: slideInUp 0.3s ease; }
 
+/* ── Hero card ── */
 .profile-hero {
   background: linear-gradient(135deg, var(--green) 0%, var(--green-mid) 100%);
   border-radius: var(--r); padding: 28px 24px 24px; margin-bottom: 16px;
   position: relative; overflow: hidden; box-shadow: var(--shadow-lg);
 }
-.profile-hero::before {
-  content: ''; position: absolute; top: -60px; right: -60px;
-  width: 200px; height: 200px; border-radius: 50%;
-  background: rgba(255,255,255,0.05);
-}
-.profile-avatar-wrap { position: relative; display: inline-block; margin-bottom: 14px; }
-.profile-avatar {
-  width: 80px; height: 80px; border-radius: 24px;
-  background: rgba(255,255,255,0.15);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-d); font-size: 32px; font-weight: 800; color: #fff;
-  border: 3px solid rgba(255,255,255,0.3); cursor: pointer;
-  overflow: hidden; position: relative;
-}
-.profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.profile-avatar-edit {
-  position: absolute; bottom: -4px; right: -4px;
-  width: 26px; height: 26px; border-radius: 8px;
-  background: var(--accent); border: 2px solid var(--green);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
-.profile-name { font-family: var(--font-d); font-size: 22px; font-weight: 800; color: #fff; }
-.profile-email { font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 2px; }
-.profile-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.12); border-radius: 99px; padding: 4px 12px; font-size: 11px; color: rgba(255,255,255,0.75); margin-top: 10px; border: 1px solid rgba(255,255,255,0.15); }
-.profile-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 18px; }
-.profile-stat { background: rgba(255,255,255,0.08); border-radius: 12px; padding: 10px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
-.profile-stat-val { font-family: var(--font-d); font-size: 18px; font-weight: 800; color: #fff; }
-.profile-stat-label { font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+.profile-hero::before { content:''; position:absolute; top:-60px; right:-60px; width:200px; height:200px; border-radius:50%; background:rgba(255,255,255,0.05); }
+.profile-hero::after  { content:''; position:absolute; bottom:-40px; left:-30px; width:150px; height:150px; border-radius:50%; background:rgba(255,255,255,0.03); }
+.profile-avatar-wrap { position:relative; display:inline-block; margin-bottom:14px; }
+.profile-avatar { width:80px; height:80px; border-radius:24px; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; font-family:var(--font-d); font-size:32px; font-weight:800; color:#fff; border:3px solid rgba(255,255,255,0.3); cursor:pointer; overflow:hidden; position:relative; transition:opacity 0.2s; }
+.profile-avatar:hover { opacity:0.85; }
+.profile-avatar img { width:100%; height:100%; object-fit:cover; }
+.profile-avatar-edit { position:absolute; bottom:-4px; right:-4px; width:26px; height:26px; border-radius:8px; background:var(--accent); border:2px solid var(--green); display:flex; align-items:center; justify-content:center; font-size:12px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+.profile-name  { font-family:var(--font-d); font-size:22px; font-weight:800; color:#fff; }
+.profile-email { font-size:13px; color:rgba(255,255,255,0.6); margin-top:2px; }
+.profile-badge { display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,0.12); border-radius:99px; padding:4px 12px; font-size:11px; color:rgba(255,255,255,0.75); margin-top:10px; border:1px solid rgba(255,255,255,0.15); }
+.profile-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:18px; }
+.profile-stat { background:rgba(255,255,255,0.08); border-radius:12px; padding:10px; text-align:center; border:1px solid rgba(255,255,255,0.1); }
+.profile-stat-val   { font-family:var(--font-d); font-size:18px; font-weight:800; color:#fff; }
+.profile-stat-label { font-size:10px; color:rgba(255,255,255,0.5); margin-top:2px; }
 
-.settings-section { margin-bottom: 16px; }
-.settings-section-title { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-muted); padding: 0 4px 8px; }
-.settings-card { background: var(--surface); border-radius: var(--r); overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--border); }
-.settings-row { display: flex; align-items: center; gap: 14px; padding: 15px 18px; cursor: pointer; transition: background 0.15s; border-bottom: 1px solid var(--border); position: relative; }
-.settings-row:last-child { border-bottom: none; }
-.settings-row:hover { background: var(--bg2); }
-.settings-row:active { background: var(--bg2); }
-.settings-row-icon { width: 36px; height: 36px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
-.settings-row-content { flex: 1; min-width: 0; }
-.settings-row-label { font-size: 14px; font-weight: 600; color: var(--text); }
-.settings-row-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
-.settings-row-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.settings-chevron { font-size: 16px; color: var(--text-muted); }
+/* ── Settings rows ── */
+.settings-section       { margin-bottom:16px; }
+.settings-section-title { font-size:11px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:var(--text-muted); padding:0 4px 8px; }
+.settings-card  { background:var(--surface); border-radius:var(--r); overflow:hidden; box-shadow:var(--shadow); border:1px solid var(--border); }
+.settings-row   { display:flex; align-items:center; gap:14px; padding:15px 18px; cursor:pointer; transition:background 0.15s; border-bottom:1px solid var(--border); }
+.settings-row:last-child { border-bottom:none; }
+.settings-row:hover  { background:var(--bg2); }
+.settings-row-icon    { width:36px; height:36px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+.settings-row-content { flex:1; min-width:0; }
+.settings-row-label   { font-size:14px; font-weight:600; color:var(--text); }
+.settings-row-sub     { font-size:11px; color:var(--text-muted); margin-top:1px; }
+.settings-chevron     { font-size:16px; color:var(--text-muted); }
 
-.toggle-switch { width: 44px; height: 24px; border-radius: 99px; background: var(--bg2); border: 1.5px solid var(--border); display: flex; align-items: center; padding: 2px; cursor: pointer; transition: background 0.3s; flex-shrink: 0; }
-.toggle-switch.on { background: var(--green); border-color: var(--green); }
-.toggle-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform 0.3s cubic-bezier(.4,0,.2,1); box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
-.toggle-switch.on .toggle-thumb { transform: translateX(20px); }
+/* ── Toggle ── */
+.toggle-switch { width:44px; height:24px; border-radius:99px; background:var(--bg2); border:1.5px solid var(--border); display:flex; align-items:center; padding:2px; cursor:pointer; transition:background 0.3s; flex-shrink:0; }
+.toggle-switch.on { background:var(--green); border-color:var(--green); }
+.toggle-thumb { width:18px; height:18px; border-radius:50%; background:#fff; transition:transform 0.3s cubic-bezier(.4,0,.2,1); box-shadow:0 1px 4px rgba(0,0,0,0.15); }
+.toggle-switch.on .toggle-thumb { transform:translateX(20px); }
 
-/* Sub-pages */
-.subpage { position: fixed; inset: 0; z-index: 200; background: var(--bg); animation: fadeInScale 0.25s ease; overflow-y: auto; }
-@media (min-width: 768px) {
-  .subpage { position: static; border-radius: 0; box-shadow: none; border: none; max-width: none; min-height: auto; }
-}
-.subpage-header { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 1; }
-@media (min-width: 768px) {
-  .subpage-header { position: static; border-radius: var(--r) var(--r) 0 0; }
-}
-.subpage-back { width: 36px; height: 36px; border-radius: 11px; background: var(--bg2); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; transition: background 0.15s; }
-.subpage-back:hover { background: var(--border); }
-.subpage-title { font-family: var(--font-d); font-size: 18px; font-weight: 800; }
-.subpage-body { padding: 20px; }
+/* ── Subpages ── */
+.subpage { position:fixed; inset:0; z-index:200; background:var(--bg); animation:fadeInScale 0.25s ease; overflow-y:auto; }
+@media (min-width:768px) { .subpage { position:static; background:transparent; animation:none; overflow-y:visible; } }
+.subpage-header { display:flex; align-items:center; gap:14px; padding:16px 20px; border-bottom:1px solid var(--border); background:var(--surface); position:sticky; top:0; z-index:1; }
+@media (min-width:768px) { .subpage-header { position:static; border-radius:var(--r) var(--r) 0 0; } }
+.subpage-back  { width:36px; height:36px; border-radius:11px; background:var(--bg2); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; transition:background 0.15s; }
+.subpage-back:hover { background:var(--border); }
+.subpage-title { font-family:var(--font-d); font-size:18px; font-weight:800; color:var(--text); }
+.subpage-body  { padding:20px; display:flex; flex-direction:column; gap:14px; }
 
-.export-opt { display: flex; align-items: center; gap: 14px; background: var(--surface); border-radius: var(--r-sm); padding: 16px; margin-bottom: 10px; cursor: pointer; border: 1px solid var(--border); transition: all 0.15s; box-shadow: var(--shadow); }
-.export-opt:hover { transform: translateY(-1px); box-shadow: var(--shadow-lg); }
-.export-opt-icon { width: 44px; height: 44px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+/* ── Notification cards ── */
+.notif-group-title { font-size:11px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:var(--text-muted); margin-bottom:8px; padding-left:2px; }
+.notif-card { background:var(--surface); border-radius:var(--r); border:1px solid var(--border); box-shadow:var(--shadow); overflow:hidden; }
+.notif-row { display:flex; align-items:center; gap:14px; padding:15px 18px; border-bottom:1px solid var(--border); transition:background 0.15s; cursor:pointer; }
+.notif-row:last-child { border-bottom:none; }
+.notif-row:hover { background:var(--bg2); }
+.notif-icon-wrap { width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.notif-text { flex:1; }
+.notif-label { font-size:14px; font-weight:600; color:var(--text); }
+.notif-sub   { font-size:11px; color:var(--text-muted); margin-top:2px; line-height:1.4; }
 
-.help-item { background: var(--surface); border-radius: var(--r-sm); padding: 16px 18px; margin-bottom: 8px; border: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
-.help-item:hover { background: var(--bg2); }
-.help-item-q { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
-.help-item-a { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+/* ── Export cards ── */
+.export-card { display:flex; align-items:center; gap:16px; background:var(--surface); border-radius:var(--r); padding:18px 20px; border:1.5px solid var(--border); box-shadow:var(--shadow); cursor:pointer; transition:all 0.18s; }
+.export-card:hover { border-color:var(--green-light); transform:translateY(-2px); box-shadow:var(--shadow-lg); }
+.export-card.exporting { border-color:var(--accent); background:var(--accent-light); }
+.export-icon { width:52px; height:52px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+.export-badge { font-size:10px; font-weight:700; padding:3px 8px; border-radius:99px; }
 
-.danger-zone { background: var(--red-light); border: 1px solid rgba(201,64,64,0.2); border-radius: var(--r); padding: 18px; margin-top: 6px; }
-.danger-zone-title { font-size: 13px; font-weight: 700; color: var(--red); margin-bottom: 10px; }
+/* ── Help page ── */
+.help-contact-card { flex:1; background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:18px 14px; text-align:center; cursor:pointer; transition:all 0.15s; box-shadow:var(--shadow); }
+.help-contact-card:hover { border-color:var(--green-light); transform:translateY(-2px); box-shadow:var(--shadow-lg); }
+.help-contact-icon  { font-size:26px; margin-bottom:8px; }
+.help-contact-label { font-size:13px; font-weight:700; color:var(--text); }
+.help-contact-sub   { font-size:11px; color:var(--text-muted); margin-top:3px; }
+.faq-item { background:var(--surface); border-radius:var(--r-sm); border:1px solid var(--border); overflow:hidden; transition:box-shadow 0.15s; }
+.faq-item:hover { box-shadow:var(--shadow); }
+.faq-q { display:flex; align-items:center; justify-content:space-between; padding:15px 18px; cursor:pointer; gap:12px; }
+.faq-q-text { font-size:14px; font-weight:600; color:var(--text); }
+.faq-chevron { font-size:12px; color:var(--text-muted); transition:transform 0.2s; flex-shrink:0; }
+.faq-chevron.open { transform:rotate(180deg); }
+.faq-a { padding:0 18px 16px; font-size:13px; color:var(--text-mid); line-height:1.7; border-top:1px solid var(--border); padding-top:12px; }
 
-.edit-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 400; display: flex; align-items: flex-end; justify-content: center; }
-@media (min-width: 768px) { .edit-modal-backdrop { align-items: center; } }
-.edit-modal { background: var(--surface); border-radius: 28px 28px 0 0; padding: 24px 22px 48px; width: 100%; max-width: 460px; animation: slideInUp 0.3s ease; }
-@media (min-width: 768px) { .edit-modal { border-radius: 28px; } }
+/* ── Privacy page ── */
+.privacy-toggle-row { display:flex; align-items:center; gap:14px; padding:16px 18px; border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.15s; }
+.privacy-toggle-row:last-child { border-bottom:none; }
+.privacy-toggle-row:hover { background:var(--bg2); }
+.security-item { display:flex; align-items:center; gap:14px; padding:16px 18px; border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.15s; }
+.security-item:last-child { border-bottom:none; }
+.security-item:hover { background:var(--bg2); }
+.security-icon { width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.security-status { font-size:10px; font-weight:700; padding:3px 8px; border-radius:99px; }
+.danger-zone { background:var(--red-light); border:1px solid rgba(201,64,64,0.2); border-radius:var(--r); padding:20px; }
+.danger-zone-title { font-size:13px; font-weight:700; color:var(--red); margin-bottom:6px; }
+.danger-zone-sub   { font-size:12px; color:var(--text-muted); margin-bottom:14px; line-height:1.5; }
+
+/* ── Edit modal ── */
+.edit-modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:400; display:flex; align-items:flex-end; justify-content:center; animation:fadeIn 0.2s; }
+@media (min-width:768px) { .edit-modal-backdrop { align-items:center; } }
+.edit-modal { background:var(--surface); border-radius:28px 28px 0 0; padding:24px 22px 48px; width:100%; max-width:460px; animation:slideInUp 0.3s ease; }
+@media (min-width:768px) { .edit-modal { border-radius:28px; padding-bottom:28px; } }
 `;
 
-/* ── sub-pages ─────────────────────────────────────────── */
+
+/* ══════════════════════════════════════════════════════════════
+   SHARED STYLES (all inline to avoid CSS class conflicts)
+══════════════════════════════════════════════════════════════ */
+const S = {
+  page:      { fontFamily:'var(--font-b)', color:'var(--text)' },
+  header:    { display:'flex', alignItems:'center', gap:14, padding:'16px 20px',
+               borderBottom:'1px solid var(--border)', background:'var(--surface)',
+               position:'sticky', top:0, zIndex:1 },
+  backBtn:   { width:36, height:36, borderRadius:11, background:'var(--bg2)', border:'none',
+               cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center',
+               fontSize:16, flexShrink:0, color:'var(--text)' },
+  title:     { fontFamily:'var(--font-d)', fontSize:18, fontWeight:800, color:'var(--text)', flex:1 },
+  body:      { padding:20, display:'flex', flexDirection:'column', gap:14 },
+  card:      { background:'var(--surface)', borderRadius:16, border:'1px solid var(--border)',
+               boxShadow:'0 2px 12px rgba(0,0,0,0.06)', overflow:'hidden' },
+  row:       { display:'flex', alignItems:'center', gap:14, padding:'14px 18px',
+               borderBottom:'1px solid var(--border)', cursor:'pointer',
+               transition:'background 0.15s', background:'transparent' },
+  rowLast:   { display:'flex', alignItems:'center', gap:14, padding:'14px 18px',
+               cursor:'pointer', transition:'background 0.15s', background:'transparent' },
+  iconBox:   (bg) => ({ width:40, height:40, borderRadius:12, background:bg,
+               display:'flex', alignItems:'center', justifyContent:'center',
+               fontSize:18, flexShrink:0 }),
+  label:     { fontSize:14, fontWeight:600, color:'var(--text)', marginBottom:2 },
+  sub:       { fontSize:11, color:'var(--text-muted)', lineHeight:1.4 },
+  sectionLbl:{ fontSize:11, fontWeight:700, letterSpacing:0.8, textTransform:'uppercase',
+               color:'var(--text-muted)', marginBottom:8 },
+  toggle:    (on) => ({
+               width:44, height:24, borderRadius:99, padding:2, border:'1.5px solid',
+               borderColor: on ? 'var(--green)' : 'var(--border)',
+               background:  on ? 'var(--green)' : 'var(--bg2)',
+               display:'flex', alignItems:'center', cursor:'pointer',
+               transition:'background 0.25s', flexShrink:0 }),
+  thumb:     (on) => ({
+               width:18, height:18, borderRadius:'50%', background:'#fff',
+               boxShadow:'0 1px 4px rgba(0,0,0,0.2)',
+               transform: on ? 'translateX(20px)' : 'translateX(0)',
+               transition:'transform 0.25s cubic-bezier(.4,0,.2,1)' }),
+  banner:    (bg, border) => ({
+               background:bg, border:`1.5px solid ${border}`,
+               borderRadius:16, padding:'14px 16px',
+               display:'flex', alignItems:'flex-start', gap:12 }),
+  badge:     (bg, color) => ({
+               fontSize:9, fontWeight:700, background:bg, color:color,
+               padding:'2px 7px', borderRadius:99, whiteSpace:'nowrap' }),
+};
+
+function Toggle({ on, onToggle }) {
+  return (
+    <div style={S.toggle(on)} onClick={e => { e.stopPropagation(); onToggle(); }}>
+      <div style={S.thumb(on)}/>
+    </div>
+  );
+}
+
+/* ══════════════ NOTIFICATIONS ══════════════════════════════ */
 function NotificationsPage({ onBack }) {
   const [prefs, setPrefs] = useState({
-    dailySummary: true, goalAlerts: true, budgetWarnings: true,
-    weeklyReport: false, newFeatures: false, tips: true,
+    budgetWarnings:true, goalAlerts:true, dailySummary:true,
+    weeklyReport:false, tips:true, soundAlerts:false, newFeatures:false,
   });
-  const rows = [
-    { key: 'dailySummary',   label: 'Daily Summary',       sub: 'End-of-day spending recap',      icon: '📅', bg: '#FDE8D8' },
-    { key: 'goalAlerts',     label: 'Goal Milestones',      sub: 'When you hit a savings target',  icon: '🎯', bg: '#D4E8DC' },
-    { key: 'budgetWarnings', label: 'Budget Warnings',      sub: 'Alert when nearing limit',       icon: '⚠️', bg: '#FDF0D8' },
-    { key: 'weeklyReport',   label: 'Weekly Report',        sub: 'Summary every Sunday',           icon: '📊', bg: '#E8F0FD' },
-    { key: 'tips',           label: 'Money Tips',           sub: 'Personalised saving advice',     icon: '💡', bg: '#FDF8E8' },
-    { key: 'newFeatures',    label: 'New Features',         sub: 'Product updates & releases',     icon: '🚀', bg: '#EDE8F8' },
+  const toggle = k => setPrefs(p => ({ ...p, [k]: !p[k] }));
+  const enabledCount = Object.values(prefs).filter(Boolean).length;
+
+  const groups = [
+    { title:'Financial Alerts', items:[
+      { k:'budgetWarnings', icon:'⚠️', bg:'#FDF0D8', label:'Budget Warnings',  sub:"Alert when you're 80% through a limit", badge:['Important','#C94040','#FDEAEA'] },
+      { k:'goalAlerts',     icon:'🎯', bg:'#D4E8DC', label:'Goal Milestones',  sub:'Celebrate every 25%, 50%, 75%, 100%',  badge:null },
+    ]},
+    { title:'Summaries & Reports', items:[
+      { k:'dailySummary',  icon:'📅', bg:'#FDE8D8', label:'Daily Summary',    sub:'End-of-day spending recap at 8 PM',      badge:null },
+      { k:'weeklyReport',  icon:'📊', bg:'#E8F0FD', label:'Weekly Report',    sub:'Full breakdown every Sunday morning',    badge:null },
+    ]},
+    { title:'Personalisation', items:[
+      { k:'tips',          icon:'💡', bg:'#FDF8E8', label:'Smart Tips',       sub:'AI insights based on your patterns',     badge:null },
+      { k:'soundAlerts',   icon:'🔔', bg:'#E8F4E8', label:'Sound Alerts',     sub:'Audio cue for important notifications', badge:null },
+      { k:'newFeatures',   icon:'🚀', bg:'#EDE8F8', label:'Product Updates',  sub:'New features and improvements',         badge:null },
+    ]},
   ];
+
   return (
-    <div className="subpage">
-      <div className="subpage-header">
-        <button className="subpage-back" onClick={onBack}>←</button>
-        <div className="subpage-title">Notifications</div>
+    <div style={S.page}>
+      <div style={S.header}>
+        <button style={S.backBtn} onClick={onBack}>←</button>
+        <div style={S.title}>Notifications</div>
+        <div style={{fontSize:12,fontWeight:700,color:'var(--green)',background:'var(--green-pale)',padding:'5px 12px',borderRadius:99}}>
+          {enabledCount} on
+        </div>
       </div>
-      <div className="subpage-body">
-        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 18, lineHeight: 1.6 }}>
-          Choose what you'd like to be notified about. Push notifications require browser permission.
-        </p>
-        <div className="settings-card">
-          {rows.map(r => (
-            <div key={r.key} className="settings-row" onClick={() => setPrefs(p => ({ ...p, [r.key]: !p[r.key] }))}>
-              <div className="settings-row-icon" style={{ background: r.bg }}>{r.icon}</div>
-              <div className="settings-row-content">
-                <div className="settings-row-label">{r.label}</div>
-                <div className="settings-row-sub">{r.sub}</div>
-              </div>
-              <div className={`toggle-switch${prefs[r.key]?' on':''}`} onClick={e => { e.stopPropagation(); setPrefs(p => ({ ...p, [r.key]: !p[r.key] })); }}>
-                <div className="toggle-thumb"/>
-              </div>
+      <div style={S.body}>
+        {/* Permission banner */}
+        <div style={S.banner('var(--accent-light)','var(--accent)')}>
+          <span style={{fontSize:22,flexShrink:0}}>🔔</span>
+          <div style={{flex:1}}>
+            <div style={{fontSize:13,fontWeight:700,color:'var(--accent)',marginBottom:4}}>Enable Browser Notifications</div>
+            <div style={{fontSize:12,color:'var(--text-mid)',lineHeight:1.55,marginBottom:10}}>
+              Allow PocketPath to send push notifications so you never miss a budget alert or goal milestone.
             </div>
-          ))}
+            <button onClick={() => Notification?.requestPermission?.()}
+              style={{background:'var(--accent)',color:'#fff',border:'none',borderRadius:8,padding:'8px 16px',fontSize:12,fontWeight:700,cursor:'pointer'}}>
+              Allow Notifications
+            </button>
+          </div>
+        </div>
+
+        {/* Groups */}
+        {groups.map((g, gi) => (
+          <div key={gi}>
+            <div style={S.sectionLbl}>{g.title}</div>
+            <div style={S.card}>
+              {g.items.map((r, ri) => (
+                <div key={r.k}
+                  style={ri < g.items.length-1 ? S.row : S.rowLast}
+                  onMouseEnter={e => e.currentTarget.style.background='var(--bg2)'}
+                  onMouseLeave={e => e.currentTarget.style.background='transparent'}
+                  onClick={() => toggle(r.k)}>
+                  <div style={S.iconBox(r.bg)}>{r.icon}</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:2}}>
+                      <span style={S.label}>{r.label}</span>
+                      {r.badge && <span style={S.badge(r.badge[2], r.badge[1])}>{r.badge[0]}</span>}
+                    </div>
+                    <div style={S.sub}>{r.sub}</div>
+                  </div>
+                  <Toggle on={prefs[r.k]} onToggle={() => toggle(r.k)}/>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {/* Quick actions */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <button onClick={() => setPrefs(Object.fromEntries(Object.keys(prefs).map(k=>[k,true])))}
+            style={{padding:12,borderRadius:12,border:'1.5px solid var(--green)',background:'var(--green-pale)',color:'var(--green)',fontFamily:'var(--font-b)',fontSize:13,fontWeight:700,cursor:'pointer'}}>
+            Enable All
+          </button>
+          <button onClick={() => setPrefs(Object.fromEntries(Object.keys(prefs).map(k=>[k,false])))}
+            style={{padding:12,borderRadius:12,border:'1.5px solid var(--border)',background:'var(--surface)',color:'var(--text-muted)',fontFamily:'var(--font-b)',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+            Disable All
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
+/* ══════════════ EXPORT DATA ═════════════════════════════════ */
 function ExportPage({ onBack, showToast }) {
-  const [exporting, setExporting] = useState(null);
+  const [exporting, setExporting]  = useState(null);
+  const [done,      setDone]       = useState({});
 
-  function doExport(type) {
-    setExporting(type);
+  function doExport(action, label) {
+    if (exporting) return;
+    setExporting(action);
     setTimeout(() => {
       setExporting(null);
-      showToast(`✓ ${type} export ready — check your downloads`);
+      setDone(d => ({ ...d, [action]: true }));
+      showToast(`✓ ${label} downloaded`);
     }, 2000);
   }
 
   const opts = [
-    { type: 'PDF Report', icon: '📄', bg: '#FFE8E8', desc: 'Full monthly report with charts & summaries', action: 'PDF' },
-    { type: 'CSV Transactions', icon: '📊', bg: '#E8F4E8', desc: 'All transactions in spreadsheet format', action: 'CSV' },
-    { type: 'JSON Backup', icon: '💾', bg: '#E8F0FD', desc: 'Complete data backup — goals, reflections, settings', action: 'JSON' },
+    { action:'PDF',  icon:'📄', bg:'#FFE8E8', label:'PDF Report',
+      desc:'Monthly report with balance summary, spending breakdown and goal progress.',
+      meta:['~250 KB','Instant'] },
+    { action:'CSV',  icon:'📊', bg:'#E8F4E8', label:'CSV Transactions',
+      desc:'All transactions as a spreadsheet — compatible with Excel and Google Sheets.',
+      meta:['~15 KB','Instant'] },
+    { action:'JSON', icon:'💾', bg:'#E8F0FD', label:'Full Data Backup',
+      desc:'Complete export of goals, journal entries, budgets and account settings.',
+      meta:['~80 KB','Instant'] },
   ];
 
   return (
-    <div className="subpage">
-      <div className="subpage-header">
-        <button className="subpage-back" onClick={onBack}>←</button>
-        <div className="subpage-title">Export Data</div>
+    <div style={S.page}>
+      <div style={S.header}>
+        <button style={S.backBtn} onClick={onBack}>←</button>
+        <div style={S.title}>Export Data</div>
       </div>
-      <div className="subpage-body">
-        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20, lineHeight: 1.6 }}>
-          Export your financial data anytime. Your data belongs to you.
-        </p>
-        {opts.map(o => (
-          <div key={o.type} className="export-opt" onClick={() => doExport(o.action)}>
-            <div className="export-opt-icon" style={{ background: o.bg }}>{o.icon}</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 600 }}>{o.type}</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{o.desc}</div>
+      <div style={S.body}>
+        {/* Privacy note */}
+        <div style={S.banner('var(--green-pale)','rgba(74,140,106,0.25)')}>
+          <span style={{fontSize:20,flexShrink:0}}>🔒</span>
+          <div>
+            <div style={{fontSize:13,fontWeight:700,color:'var(--green)',marginBottom:2}}>Your data, your rules</div>
+            <div style={{fontSize:12,color:'var(--text-mid)',lineHeight:1.55}}>
+              Exports are generated on demand. PocketPath never sells or shares your financial data.
             </div>
-            {exporting === o.action ? (
-              <div className="spinner" style={{ width: 18, height: 18 }}/>
-            ) : (
-              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>↓</div>
-            )}
+          </div>
+        </div>
+
+        {/* Export options */}
+        {opts.map(o => (
+          <div key={o.action}
+            onClick={() => doExport(o.action, o.label)}
+            style={{
+              display:'flex', alignItems:'center', gap:16,
+              background: done[o.action] ? 'var(--green-pale)' : exporting===o.action ? 'var(--accent-light)' : 'var(--surface)',
+              border:`1.5px solid ${done[o.action] ? 'var(--green)' : exporting===o.action ? 'var(--accent)' : 'var(--border)'}`,
+              borderRadius:16, padding:'18px 20px',
+              boxShadow:'0 2px 12px rgba(0,0,0,0.06)',
+              cursor: exporting ? 'default' : 'pointer',
+              transition:'all 0.2s',
+            }}
+            onMouseEnter={e => { if(!exporting && !done[o.action]) e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 6px 24px rgba(0,0,0,0.1)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 2px 12px rgba(0,0,0,0.06)'; }}>
+            <div style={{...S.iconBox(o.bg), width:52, height:52, borderRadius:16, fontSize:24}}>{o.icon}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:5}}>
+                <span style={{fontSize:15,fontWeight:700,color:'var(--text)'}}>{o.label}</span>
+                {done[o.action] && <span style={S.badge('var(--green-pale)','var(--green)')}>✓ Downloaded</span>}
+              </div>
+              <div style={{fontSize:12,color:'var(--text-muted)',lineHeight:1.55,marginBottom:8}}>{o.desc}</div>
+              <div style={{display:'flex',gap:16}}>
+                {o.meta.map((m,i) => (
+                  <span key={i} style={{fontSize:11,color:'var(--text-muted)',display:'flex',alignItems:'center',gap:4}}>
+                    <span>{i===0?'📦':'⚡'}</span>{m}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div style={{width:36,height:36,borderRadius:'50%',background:'var(--bg2)',border:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>
+              {exporting===o.action ? <div style={{width:16,height:16,border:'2px solid var(--border)',borderTopColor:'var(--green)',borderRadius:'50%',animation:'spin 0.7s linear infinite'}}/> : done[o.action] ? '✓' : '↓'}
+            </div>
           </div>
         ))}
-        <div style={{ background: 'var(--accent-light)', border: '1px solid rgba(232,160,48,0.25)', borderRadius: 'var(--r-sm)', padding: '12px 16px', marginTop: 8 }}>
-          <div style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600 }}>🔒 Your data is private</div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, lineHeight: 1.55 }}>PocketPath never sells your data. Exports are generated locally and never stored on our servers.</div>
+
+        <div style={{background:'var(--surface)',borderRadius:16,border:'1px solid var(--border)',padding:'16px 18px'}}>
+          <div style={{fontSize:13,fontWeight:700,color:'var(--text)',marginBottom:5}}>📅 Data Range</div>
+          <div style={{fontSize:12,color:'var(--text-muted)',lineHeight:1.6}}>Exports include all data from your account creation to today. Date-range filtering coming soon.</div>
         </div>
       </div>
     </div>
   );
 }
 
+/* ══════════════ HELP & SUPPORT ══════════════════════════════ */
 function HelpPage({ onBack }) {
-  const [open, setOpen] = useState(null);
+  const [openFaq, setOpenFaq] = useState(null);
+  const [search,  setSearch]  = useState('');
+
   const faqs = [
-    { q: 'How do I add a transaction?', a: 'Tap the "+ Add Transaction" button in the sidebar (desktop) or on the Home screen (mobile). Fill in the amount, description, and category.' },
-    { q: 'How does the day streak work?', a: 'Your streak increases by 1 each day you log at least one transaction. Missing a day resets it to 1. Keep the habit going!' },
-    { q: 'Can I set spending limits per category?', a: 'Yes! Go to Insights → and use the budget feature to set monthly limits per category. You\'ll see alerts when you\'re close.' },
-    { q: 'How do I add money to a goal?', a: 'Open the Goals tab, tap a goal, and update the saved amount. You can add partial amounts anytime.' },
-    { q: 'Is my data secure?', a: 'All data is encrypted in transit (HTTPS) and your password is hashed with bcrypt. We never store plain-text credentials.' },
-    { q: 'Can I use PocketPath on multiple devices?', a: 'Yes — your account syncs across all devices. Just sign in with the same email.' },
+    { q:'How do I add a transaction?',             a:'Tap "+ Add Transaction" in the sidebar (desktop) or on the Home tab. Enter the amount, description, and category. The dashboard updates instantly.' },
+    { q:'How does the day streak work?',            a:'Your streak increases by 1 each day you log at least one transaction. Missing a day resets it to 1. The streak shows on your Home and Profile.' },
+    { q:'Can I set spending limits per category?',  a:"Yes — go to Insights → Category Breakdown. Each category has an optional budget. Set one and you'll see alerts when you're close." },
+    { q:'How do I track a savings goal?',           a:'Open the Goals tab, tap any goal card, and update the saved amount. The progress bar updates automatically.' },
+    { q:'Is my data backed up?',                    a:'All data is stored in MongoDB Atlas with automatic backups. You can also export a full JSON backup from Profile → Export Data anytime.' },
+    { q:'Can I use PocketPath on multiple devices?',a:'Yes — sign in with the same email on any device. Your data syncs automatically.' },
+    { q:'How do I change my password?',             a:'Go to Profile → Privacy & Security → Change Password. You need your current password to set a new one.' },
+    { q:'What currencies are supported?',           a:'INR (₹), USD ($), EUR (€), and GBP (£). Change yours in Profile → Edit Profile.' },
   ];
+
+  const filtered = faqs.filter(f =>
+    !search || f.q.toLowerCase().includes(search.toLowerCase()) || f.a.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
-    <div className="subpage">
-      <div className="subpage-header">
-        <button className="subpage-back" onClick={onBack}>←</button>
-        <div className="subpage-title">Help & Support</div>
+    <div style={S.page}>
+      <div style={S.header}>
+        <button style={S.backBtn} onClick={onBack}>←</button>
+        <div style={S.title}>Help & Support</div>
       </div>
-      <div className="subpage-body">
-        <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-          {[{icon:'📧', label:'Email us'},{icon:'💬', label:'Live chat'},{icon:'📚', label:'Docs'}].map((c,i) => (
-            <div key={i} style={{ flex:1, background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'var(--r-sm)', padding:'14px 10px', textAlign:'center', cursor:'pointer', transition:'all 0.15s', boxShadow:'var(--shadow)' }}>
-              <div style={{ fontSize: 22, marginBottom: 6 }}>{c.icon}</div>
-              <div style={{ fontSize: 12, fontWeight: 600 }}>{c.label}</div>
-            </div>
+      <div style={S.body}>
+        {/* Contact cards */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
+          {[
+            {icon:'📧',label:'Email Us',    sub:'24h response',   href:'mailto:support@pocketpath.app'},
+            {icon:'💬',label:'Live Chat',   sub:'Mon–Fri 10–6',   href:'#'},
+            {icon:'📚',label:'Docs',        sub:'Guides & tips',  href:'#'},
+          ].map((c,i) => (
+            <a key={i} href={c.href} target="_blank" rel="noreferrer" style={{textDecoration:'none'}}>
+              <div style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:14,padding:'16px 10px',textAlign:'center',cursor:'pointer',boxShadow:'0 2px 8px rgba(0,0,0,0.05)',transition:'all 0.15s'}}
+                onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 6px 20px rgba(0,0,0,0.1)';e.currentTarget.style.borderColor='var(--green-light)';}}
+                onMouseLeave={e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)';e.currentTarget.style.borderColor='var(--border)';}}>
+                <div style={{fontSize:26,marginBottom:8}}>{c.icon}</div>
+                <div style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>{c.label}</div>
+                <div style={{fontSize:11,color:'var(--text-muted)',marginTop:3}}>{c.sub}</div>
+              </div>
+            </a>
           ))}
         </div>
-        <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10 }}>FAQ</div>
-        {faqs.map((f, i) => (
-          <div key={i} className="help-item" onClick={() => setOpen(open===i?null:i)}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div className="help-item-q">{f.q}</div>
-              <span style={{ color: 'var(--text-muted)', fontSize: 14, marginLeft: 8, flexShrink: 0 }}>{open===i?'▲':'▼'}</span>
-            </div>
-            {open === i && <div className="help-item-a" style={{ marginTop: 8 }}>{f.a}</div>}
+
+        {/* Search */}
+        <div style={{position:'relative'}}>
+          <span style={{position:'absolute',left:14,top:'50%',transform:'translateY(-50%)',fontSize:14,pointerEvents:'none'}}>🔍</span>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search questions…"
+            style={{width:'100%',background:'var(--surface)',border:'1.5px solid var(--border)',borderRadius:10,padding:'12px 14px 12px 42px',fontFamily:'var(--font-b)',fontSize:13,color:'var(--text)',outline:'none',display:'block'}}/>
+        </div>
+
+        {/* FAQ */}
+        <div>
+          <div style={{...S.sectionLbl,marginBottom:10}}>
+            FAQ {search ? `· ${filtered.length} result${filtered.length!==1?'s':''}` : `· ${faqs.length} questions`}
           </div>
-        ))}
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            {filtered.length===0 ? (
+              <div style={{textAlign:'center',padding:28,color:'var(--text-muted)',fontSize:13}}>No results for "{search}"</div>
+            ) : filtered.map((f,i) => (
+              <div key={i} style={{background:'var(--surface)',borderRadius:12,border:'1px solid var(--border)',overflow:'hidden',boxShadow:'0 1px 6px rgba(0,0,0,0.04)'}}>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 18px',cursor:'pointer',gap:12}}
+                  onClick={()=>setOpenFaq(openFaq===i?null:i)}
+                  onMouseEnter={e=>e.currentTarget.style.background='var(--bg2)'}
+                  onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                  <span style={{fontSize:14,fontWeight:600,color:'var(--text)',flex:1}}>{f.q}</span>
+                  <span style={{color:'var(--text-muted)',fontSize:11,flexShrink:0,transition:'transform 0.2s',display:'inline-block',transform:openFaq===i?'rotate(180deg)':'none'}}>▼</span>
+                </div>
+                {openFaq===i && (
+                  <div style={{padding:'0 18px 16px',fontSize:13,color:'var(--text-mid)',lineHeight:1.7,borderTop:'1px solid var(--border)',paddingTop:12}}>
+                    {f.a}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Still stuck */}
+        <div style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:16,padding:'20px',textAlign:'center',boxShadow:'0 2px 12px rgba(0,0,0,0.06)'}}>
+          <div style={{fontSize:24,marginBottom:10}}>🤝</div>
+          <div style={{fontSize:15,fontWeight:700,color:'var(--text)',marginBottom:5}}>Still need help?</div>
+          <div style={{fontSize:12,color:'var(--text-muted)',marginBottom:16,lineHeight:1.6}}>Our team is here for you. Describe your issue and we'll get back within 24 hours.</div>
+          <a href="mailto:support@pocketpath.app"
+            style={{display:'inline-block',background:'var(--green)',color:'#fff',padding:'11px 28px',borderRadius:12,fontSize:13,fontWeight:700,textDecoration:'none'}}>
+            Contact Support →
+          </a>
+        </div>
       </div>
     </div>
   );
 }
 
-function PrivacyPage({ onBack }) {
-  const [settings, setSettings] = useState({ analytics: false, crashReports: true, personalization: true });
+/* ══════════════ PRIVACY & SECURITY ═════════════════════════ */
+function PrivacyPage({ onBack, showToast }) {
+  const [privacy,     setPrivacy]     = useState({ analytics:false, crashReports:true, personalization:true });
+  const [showPwdForm, setShowPwdForm] = useState(false);
+  const [pwd,         setPwd]         = useState({ current:'', next:'', confirm:'' });
+  const [pwdBusy,     setPwdBusy]     = useState(false);
+  const [showPwd,     setShowPwd]     = useState({ c:false, n:false, conf:false });
+
+  const togglePrivacy = k => setPrivacy(p => ({ ...p, [k]: !p[k] }));
+
+  async function changePassword(e) {
+    e.preventDefault();
+    if (pwd.next !== pwd.confirm) { showToast('⚠️ Passwords do not match'); return; }
+    if (pwd.next.length < 6)      { showToast('⚠️ Min 6 characters'); return; }
+    setPwdBusy(true);
+    try {
+      const res = await fetch('/api/profile/password', {
+        method:'PUT',
+        headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${localStorage.getItem('pp_token')}` },
+        body: JSON.stringify({ currentPassword: pwd.current, newPassword: pwd.next }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+      showToast('✓ Password changed');
+      setShowPwdForm(false);
+      setPwd({ current:'', next:'', confirm:'' });
+    } catch(err) { showToast('⚠️ ' + err.message); }
+    finally { setPwdBusy(false); }
+  }
+
+  const inputStyle = { width:'100%', background:'var(--bg)', border:'1.5px solid var(--border)', borderRadius:8, padding:'11px 40px 11px 14px', fontFamily:'var(--font-b)', fontSize:13, color:'var(--text)', outline:'none', display:'block' };
+
   return (
-    <div className="subpage">
-      <div className="subpage-header">
-        <button className="subpage-back" onClick={onBack}>←</button>
-        <div className="subpage-title">Privacy & Security</div>
+    <div style={S.page}>
+      <div style={S.header}>
+        <button style={S.backBtn} onClick={onBack}>←</button>
+        <div style={S.title}>Privacy & Security</div>
       </div>
-      <div className="subpage-body">
-        <div className="settings-section">
-          <div className="settings-section-title">Data & Privacy</div>
-          <div className="settings-card">
-            {[
-              { key:'analytics', label:'Usage Analytics', sub:'Help improve the app (anonymous)', icon:'📈', bg:'#E8F0FD' },
-              { key:'crashReports', label:'Crash Reports', sub:'Automatically send error logs', icon:'🐛', bg:'#FDE8D8' },
-              { key:'personalization', label:'Personalisation', sub:'AI-powered spending tips', icon:'✨', bg:'#EDE8F8' },
-            ].map(r => (
-              <div key={r.key} className="settings-row" onClick={() => setSettings(p => ({ ...p, [r.key]: !p[r.key] }))}>
-                <div className="settings-row-icon" style={{ background: r.bg }}>{r.icon}</div>
-                <div className="settings-row-content">
-                  <div className="settings-row-label">{r.label}</div>
-                  <div className="settings-row-sub">{r.sub}</div>
-                </div>
-                <div className={`toggle-switch${settings[r.key]?' on':''}`}>
-                  <div className="toggle-thumb"/>
-                </div>
-              </div>
-            ))}
+      <div style={S.body}>
+
+        {/* Security score */}
+        <div style={{background:'linear-gradient(135deg, var(--green) 0%, var(--green-mid) 100%)',borderRadius:16,padding:'20px',display:'flex',alignItems:'center',gap:18,boxShadow:'0 4px 20px rgba(26,60,46,0.2)'}}>
+          <div style={{width:64,height:64,borderRadius:'50%',background:'rgba(255,255,255,0.12)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',flexShrink:0,border:'2px solid rgba(255,255,255,0.2)'}}>
+            <div style={{fontFamily:'var(--font-d)',fontSize:22,fontWeight:800,color:'#fff',lineHeight:1}}>72</div>
+            <div style={{fontSize:9,color:'rgba(255,255,255,0.6)',marginTop:2}}>/100</div>
+          </div>
+          <div style={{flex:1}}>
+            <div style={{fontFamily:'var(--font-d)',fontSize:16,fontWeight:800,color:'#fff',marginBottom:4}}>Security Score</div>
+            <div style={{fontSize:12,color:'rgba(255,255,255,0.7)',lineHeight:1.5,marginBottom:10}}>Enable 2FA to boost your score to 95+</div>
+            <div style={{height:5,background:'rgba(255,255,255,0.15)',borderRadius:99,overflow:'hidden'}}>
+              <div style={{height:'100%',width:'72%',background:'#7DE8A8',borderRadius:99}}/>
+            </div>
           </div>
         </div>
-        <div className="settings-section">
-          <div className="settings-section-title">Account Security</div>
-          <div className="settings-card">
-            {[
-              { label:'Change Password', sub:'Last changed: never', icon:'🔒', bg:'#E8F0FD' },
-              { label:'Active Sessions', sub:'1 device signed in', icon:'📱', bg:'#D4E8DC' },
-              { label:'Two-Factor Auth', sub:'Not enabled', icon:'🛡️', bg:'#FDE8D8', badge:'Recommended' },
-            ].map((r,i) => (
-              <div key={i} className="settings-row">
-                <div className="settings-row-icon" style={{ background: r.bg }}>{r.icon}</div>
-                <div className="settings-row-content">
-                  <div className="settings-row-label" style={{ display:'flex', alignItems:'center', gap:6 }}>
-                    {r.label}
-                    {r.badge && <span style={{ fontSize:9, background:'var(--accent-light)', color:'var(--accent)', padding:'2px 6px', borderRadius:99, fontWeight:700 }}>{r.badge}</span>}
+
+        {/* Account security */}
+        <div>
+          <div style={S.sectionLbl}>Account Security</div>
+          <div style={S.card}>
+            {/* Change password row */}
+            <div style={S.row}
+              onMouseEnter={e=>e.currentTarget.style.background='var(--bg2)'}
+              onMouseLeave={e=>e.currentTarget.style.background='transparent'}
+              onClick={()=>setShowPwdForm(v=>!v)}>
+              <div style={S.iconBox('#E8F0FD')}>🔒</div>
+              <div style={{flex:1}}>
+                <div style={S.label}>Change Password</div>
+                <div style={S.sub}>Use a strong, unique password</div>
+              </div>
+              <span style={{color:'var(--text-muted)',fontSize:14,transition:'transform 0.2s',display:'inline-block',transform:showPwdForm?'rotate(90deg)':'none'}}>›</span>
+            </div>
+
+            {showPwdForm && (
+              <form onSubmit={changePassword} style={{padding:'16px 18px',borderTop:'1px solid var(--border)',background:'var(--bg)',display:'flex',flexDirection:'column',gap:10}}>
+                {[
+                  {field:'current',label:'Current password', key:'c'},
+                  {field:'next',   label:'New password',     key:'n'},
+                  {field:'confirm',label:'Confirm password', key:'conf'},
+                ].map(f => (
+                  <div key={f.field} style={{position:'relative'}}>
+                    <input type={showPwd[f.key]?'text':'password'} placeholder={f.label} value={pwd[f.field]}
+                      onChange={e=>setPwd(p=>({...p,[f.field]:e.target.value}))} style={inputStyle}/>
+                    <button type="button" onClick={()=>setShowPwd(p=>({...p,[f.key]:!p[f.key]}))}
+                      style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:15,color:'var(--text-muted)',padding:2}}>
+                      {showPwd[f.key]?'🙈':'👁️'}
+                    </button>
                   </div>
-                  <div className="settings-row-sub">{r.sub}</div>
+                ))}
+                <div style={{display:'flex',gap:8}}>
+                  <button type="submit" disabled={pwdBusy}
+                    style={{flex:1,padding:11,background:'var(--green)',color:'#fff',border:'none',borderRadius:10,fontSize:13,fontWeight:700,cursor:'pointer',opacity:pwdBusy?0.7:1}}>
+                    {pwdBusy?'Saving…':'Update Password'}
+                  </button>
+                  <button type="button" onClick={()=>setShowPwdForm(false)}
+                    style={{flex:1,padding:11,background:'var(--bg2)',color:'var(--text-mid)',border:'none',borderRadius:10,fontSize:13,fontWeight:600,cursor:'pointer'}}>
+                    Cancel
+                  </button>
                 </div>
-                <div className="settings-chevron">›</div>
+              </form>
+            )}
+
+            {/* 2FA */}
+            <div style={S.row}
+              onMouseEnter={e=>e.currentTarget.style.background='var(--bg2)'}
+              onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+              <div style={S.iconBox('#FDE8D8')}>🛡️</div>
+              <div style={{flex:1}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:2}}>
+                  <span style={S.label}>Two-Factor Auth</span>
+                  <span style={S.badge('#FDEAEA','#C94040')}>Off</span>
+                </div>
+                <div style={S.sub}>Add an extra layer of protection</div>
+              </div>
+              <button onClick={()=>showToast('2FA setup coming soon!')}
+                style={{fontSize:12,fontWeight:700,color:'var(--green)',background:'var(--green-pale)',border:'none',borderRadius:8,padding:'6px 12px',cursor:'pointer'}}>
+                Enable
+              </button>
+            </div>
+
+            {/* Sessions */}
+            <div style={S.rowLast}
+              onMouseEnter={e=>e.currentTarget.style.background='var(--bg2)'}
+              onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+              <div style={S.iconBox('#D4E8DC')}>📱</div>
+              <div style={{flex:1}}>
+                <div style={S.label}>Active Sessions</div>
+                <div style={S.sub}>1 device currently signed in</div>
+              </div>
+              <button onClick={()=>showToast('✓ All other sessions signed out')}
+                style={{fontSize:12,fontWeight:700,color:'var(--red)',background:'var(--red-light)',border:'none',borderRadius:8,padding:'6px 12px',cursor:'pointer'}}>
+                Sign out all
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Privacy toggles */}
+        <div>
+          <div style={S.sectionLbl}>Data & Privacy</div>
+          <div style={S.card}>
+            {[
+              {k:'analytics',      icon:'📈', bg:'#E8F0FD', label:'Usage Analytics',   sub:'Anonymous data to improve the app'},
+              {k:'crashReports',   icon:'🐛', bg:'#FDE8D8', label:'Crash Reports',      sub:'Auto-send error logs to our team'},
+              {k:'personalization',icon:'✨', bg:'#EDE8F8', label:'AI Personalisation', sub:'Smarter tips based on your patterns'},
+            ].map((r,i,arr) => (
+              <div key={r.k}
+                style={i<arr.length-1 ? S.row : S.rowLast}
+                onMouseEnter={e=>e.currentTarget.style.background='var(--bg2)'}
+                onMouseLeave={e=>e.currentTarget.style.background='transparent'}
+                onClick={()=>togglePrivacy(r.k)}>
+                <div style={S.iconBox(r.bg)}>{r.icon}</div>
+                <div style={{flex:1}}>
+                  <div style={S.label}>{r.label}</div>
+                  <div style={S.sub}>{r.sub}</div>
+                </div>
+                <Toggle on={privacy[r.k]} onToggle={()=>togglePrivacy(r.k)}/>
               </div>
             ))}
           </div>
         </div>
-        <div className="danger-zone">
-          <div className="danger-zone-title">⚠️ Danger Zone</div>
-          <button style={{ background:'var(--red)', color:'#fff', border:'none', borderRadius:'var(--r-xs)', padding:'10px 16px', fontSize:13, fontWeight:600, cursor:'pointer', width:'100%' }}>
+
+        {/* Legal links */}
+        <div>
+          <div style={S.sectionLbl}>Legal</div>
+          <div style={S.card}>
+            {[
+              {label:'Privacy Policy',    sub:'How we handle your data',  icon:'📋'},
+              {label:'Terms of Service',  sub:'Usage rules & agreements', icon:'📝'},
+              {label:'Data Processing',   sub:'GDPR & compliance info',   icon:'🌐'},
+            ].map((r,i,arr) => (
+              <div key={i} style={i<arr.length-1?S.row:S.rowLast}
+                onMouseEnter={e=>e.currentTarget.style.background='var(--bg2)'}
+                onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                <div style={S.iconBox('var(--bg2)')}>{r.icon}</div>
+                <div style={{flex:1}}>
+                  <div style={S.label}>{r.label}</div>
+                  <div style={S.sub}>{r.sub}</div>
+                </div>
+                <span style={{color:'var(--text-muted)',fontSize:16}}>›</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Danger zone */}
+        <div style={{background:'var(--red-light)',border:'1px solid rgba(201,64,64,0.2)',borderRadius:16,padding:'20px'}}>
+          <div style={{fontSize:13,fontWeight:700,color:'var(--red)',marginBottom:5}}>⚠️ Danger Zone</div>
+          <div style={{fontSize:12,color:'var(--text-muted)',marginBottom:14,lineHeight:1.55}}>
+            Deleting your account is permanent. All transactions, goals, journals and settings will be erased immediately.
+          </div>
+          <button
+            onClick={()=>{ if(window.confirm('This cannot be undone. Are you sure?')) showToast('Contact support to delete your account'); }}
+            style={{background:'var(--red)',color:'#fff',border:'none',borderRadius:10,padding:'12px 20px',fontSize:13,fontWeight:700,cursor:'pointer',width:'100%'}}>
             Delete Account & All Data
           </button>
         </div>
@@ -490,7 +846,7 @@ export default function ProfileContent({ isDesktop, showToast }) {
                   {subPage==='notifications' && <NotificationsPage onBack={()=>setSubPage(null)}/>}
                   {subPage==='export'        && <ExportPage        onBack={()=>setSubPage(null)} showToast={showToast}/>}
                   {subPage==='help'          && <HelpPage          onBack={()=>setSubPage(null)}/>}
-                  {subPage==='privacy'       && <PrivacyPage       onBack={()=>setSubPage(null)}/>}
+                  {subPage==='privacy'       && <PrivacyPage       onBack={()=>setSubPage(null)} showToast={showToast}/>}
                 </div>
               )}
 

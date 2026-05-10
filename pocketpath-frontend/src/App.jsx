@@ -16,6 +16,15 @@ const CAT_COLOR = {
   Subscriptions:"#FFE8E8", Income:"#D4E8DC", Transfer:"#E8F0FD",
   Health:"#F8E8F4", Education:"#FDF8E8", Entertainment:"#F0E8FD", Other:"#F0EDE8",
 };
+// Dark-mode variants
+const CAT_COLOR_DARK = {
+  Food:"#3D2010", Travel:"#201830", Shopping:"#101C28", Groceries:"#0D2018",
+  Subscriptions:"#2A1010", Income:"#0A2018", Transfer:"#101828",
+  Health:"#2A0C20", Education:"#2A2208", Entertainment:"#1A1030", Other:"#1C1A18",
+};
+function getCatColor(cat, dark) {
+  return dark ? (CAT_COLOR_DARK[cat] || '#1C1A18') : (CAT_COLOR[cat] || '#F0EDE8');
+}
 const CATS = ["Food","Travel","Shopping","Groceries","Subscriptions","Health","Education","Entertainment","Transfer","Other"];
 const CHART_COLORS = ["#E8945A","#5A7DE8","#A05AE8","#5AE89A","#E8C85A","#E85A5A","#5AE8E8"];
 
@@ -64,16 +73,30 @@ function DarkToggle({ dark, toggle }) {
 }
 
 function Brand() {
-  return <div className="brand"><div className="brand-dot"/>PocketPath</div>;
-}
+  return (
+    <div className="brand">
+      <img 
+        src="/piggybank.png" 
+        alt="PocketPath Logo" 
+        className="brand-logo"
+        style={{ width: "28px", height: "28px" }}
+      />
 
+      <span className="brand-text">
+        PocketPath
+      </span>
+    </div>
+  );
+}
 /* ══════════════════════════ PAGE COMPONENTS ══════════════════ */
 
-function HomeContent({ isDesktop, onAdd, showToast }) {
-  const [data,    setData]    = useState(null);
-  const [loading, setLoading] = useState(true);
+function HomeContent({ isDesktop, onAdd, showToast, refreshKey, dark }) {
+  const [data,       setData]       = useState(null);
+  const [loading,    setLoading]    = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
     try {
       const res = await dashboardApi.get();
       setData(res.data);
@@ -81,10 +104,18 @@ function HomeContent({ isDesktop, onAdd, showToast }) {
       showToast('⚠️ ' + e.message);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  // Re-fetch dashboard whenever a transaction is added (refreshKey changes)
+  useEffect(() => {
+    if (refreshKey > 0) {
+      load(true);  // silent refresh with pulse indicator
+    } else {
+      load(false); // initial load with spinner
+    }
+  }, [refreshKey]);
 
   if (loading) return <Spinner/>;
   if (!data)   return null;
@@ -99,7 +130,7 @@ function HomeContent({ isDesktop, onAdd, showToast }) {
 
   const BalCard = () => (
     <div className="balance-card">
-      <div className="balance-label">Total Balance · {month}</div>
+      <div className="balance-label" style={{display:"flex",alignItems:"center",gap:6}}>Total Balance · {month}{refreshing && <span style={{fontSize:9,background:"rgba(255,255,255,0.2)",padding:"2px 7px",borderRadius:99,letterSpacing:0.3}}>Updating…</span>}</div>
       <div className="balance-amount">{fmtINR(totalBalance)}</div>
       <div className="balance-row">
         <div><div className="stat-label">Income</div><div className="stat-val income">+{fmtINR(monthlyIncome)}</div></div>
@@ -187,8 +218,8 @@ function HomeContent({ isDesktop, onAdd, showToast }) {
             <div className="empty-state"><div className="empty-icon">💸</div><div className="empty-title">No transactions yet</div></div>
           ) : recentTransactions.map(t => (
             <div key={t._id} className="tx-row" style={{marginBottom:6}}>
-              <div className="tx-icon" style={{background: CAT_COLOR[t.category] || '#F0EDE8'}}>{CAT_ICON[t.category]||'📌'}</div>
-              <div className="tx-info"><div className="tx-name">{t.title}</div><div className="tx-cat">{t.category} · {t.merchant || ''}</div></div>
+              <div className="tx-icon" style={{background: getCatColor(t.category, dark)}}>{CAT_ICON[t.category]||'📌'}</div>
+              <div className="tx-info"><div className="tx-name">{t.title}</div><div className="tx-cat">{t.category}{t.merchant ? ' · '+t.merchant : ''}</div></div>
               <div className={`tx-amount ${t.type==='income'?"credit":"debit"}`}>
                 {t.type==='income'?'+':'-'}{fmtINR(t.amount)}
               </div>
@@ -229,7 +260,7 @@ function HomeContent({ isDesktop, onAdd, showToast }) {
           <div className="empty-state"><div className="empty-icon">💸</div><div className="empty-title">No transactions yet</div><div>Add your first expense to get started</div></div>
         ) : recentTransactions.map(t => (
           <div key={t._id} className="tx-row">
-            <div className="tx-icon" style={{background: CAT_COLOR[t.category]||'#F0EDE8'}}>{CAT_ICON[t.category]||'📌'}</div>
+            <div className="tx-icon" style={{background: getCatColor(t.category, dark)}}>{CAT_ICON[t.category]||'📌'}</div>
             <div className="tx-info"><div className="tx-name">{t.title}</div><div className="tx-cat">{t.category}</div></div>
             <div className={`tx-amount ${t.type==='income'?"credit":"debit"}`}>
               {t.type==='income'?'+':'-'}{fmtINR(t.amount)}
@@ -244,7 +275,7 @@ function HomeContent({ isDesktop, onAdd, showToast }) {
   );
 }
 
-function ActivityContent({ isDesktop, refreshKey }) {
+function ActivityContent({ isDesktop, refreshKey, dark }) {
   const [transactions, setTx]     = useState([]);
   const [loading,      setLoading] = useState(true);
   const [page,         setPage]    = useState(1);
@@ -299,7 +330,7 @@ function ActivityContent({ isDesktop, refreshKey }) {
             </div>
           ) : transactions.map(t => (
             <div key={t._id} className="tx-row">
-              <div className="tx-icon" style={{background: CAT_COLOR[t.category]||'#F0EDE8'}}>{CAT_ICON[t.category]||'📌'}</div>
+              <div className="tx-icon" style={{background: getCatColor(t.category, dark)}}>{CAT_ICON[t.category]||'📌'}</div>
               <div className="tx-info">
                 <div className="tx-name">{t.title}</div>
                 <div className="tx-cat">{t.category}{t.merchant ? ` · ${t.merchant}` : ''}</div>
@@ -316,7 +347,7 @@ function ActivityContent({ isDesktop, refreshKey }) {
               <div className="section-title" style={{marginBottom:14}}>Spending by Category</div>
               {[...transactions.filter(t=>t.type==='expense').reduce((m,t)=>{m.set(t.category,(m.get(t.category)||0)+t.amount);return m;},new Map()).entries()].sort((a,b)=>b[1]-a[1]).slice(0,6).map(([cat,amt],i)=>(
                 <div key={i} style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
-                  <div style={{width:32,height:32,borderRadius:9,background:CAT_COLOR[cat]||'#F0EDE8',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>{CAT_ICON[cat]||'📌'}</div>
+                  <div style={{width:32,height:32,borderRadius:9,background:getCatColor(cat,dark),display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>{CAT_ICON[cat]||'📌'}</div>
                   <div style={{flex:1}}>
                     <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
                       <span style={{fontSize:13,fontWeight:600,color:'var(--text)'}}>{cat}</span>
@@ -493,16 +524,17 @@ function GoalsContent({ isDesktop, showToast }) {
   );
 }
 
-function InsightsContent({ isDesktop, showToast }) {
+function InsightsContent({ isDesktop, showToast, refreshKey, dark }) {
   const [breakdown, setBreakdown] = useState([]);
   const [loading,   setLoading]   = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     insightsApi.categories()
       .then(res => setBreakdown(res.breakdown))
       .catch(e => showToast('⚠️ ' + e.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [refreshKey]);
 
   if (loading) return <Spinner/>;
 
@@ -820,8 +852,10 @@ function AddModal({ onClose, onAdd }) {
     if (!amount || !name) return;
     setSaving(true);
     try {
-      await onAdd({ title: name, amount: Number(amount), type, category: cat, merchant });
+      await onAdd({ title: name, amount: Number(amount), type, category: type==='income'?'Income':cat, merchant });
       onClose();
+    } catch(e) {
+      // error already toasted by addTx
     } finally {
       setSaving(false);
     }
@@ -846,11 +880,15 @@ function AddModal({ onClose, onAdd }) {
         <input className="input-field" placeholder="Description (e.g. Lunch at Swiggy)" value={name} onChange={e=>setName(e.target.value)}/>
         <input className="input-field" placeholder="Merchant (optional)" value={merchant} onChange={e=>setMerchant(e.target.value)}/>
 
-        {type === 'expense' && (
+        {type === 'income' ? (
+          <div style={{background:'var(--green-pale)',border:'1px solid var(--green-light)',borderRadius:'var(--r-xs)',padding:'10px 14px',marginBottom:10,fontSize:13,color:'var(--green)',fontWeight:600}}>
+            💰 This will be recorded as Income
+          </div>
+        ) : (
           <>
             <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:8,fontWeight:500}}>Category</div>
             <div className="cat-grid">
-              {CATS.map(c => (
+              {CATS.filter(c=>c!=='Income').map(c => (
                 <div key={c} className={`cat-btn${cat===c?" selected":""}`} onClick={()=>setCat(c)}>
                   <span style={{fontSize:19}}>{CAT_ICON[c]}</span>
                   <span>{c}</span>
@@ -912,15 +950,20 @@ export default function PocketPath() {
 
   async function addTx(body) {
     try {
-      await txApi.create(body);
+      const res = await txApi.create(body);
+      // Increment refresh key — causes HomeContent, ActivityContent, InsightsContent to re-fetch
       setTxRef(r => r + 1);
       showToast(`✓ ${body.type === 'income' ? 'Income' : 'Expense'} added`);
+      // If we're not on home, switch to home so user sees the update
+      // (don't force-switch — let the refreshKey do the work silently)
+      return res;
     } catch (e) {
       showToast('⚠️ ' + e.message);
+      throw e;
     }
   }
 
-  const pp = { isDesktop, showToast, onAdd: () => setModal(true), onComplete: () => setTab('home'), refreshKey: txRefresh };
+  const pp = { isDesktop, showToast, onAdd: () => setModal(true), onComplete: () => setTab('home'), refreshKey: txRefresh, dark };
 
   function renderPage() {
     if (tab === 'home')     return <HomeContent     {...pp}/>;
