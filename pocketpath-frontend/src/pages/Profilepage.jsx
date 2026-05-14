@@ -856,7 +856,7 @@ export default function ProfileContent({ isDesktop, showToast }) {
                   <div style={{width:36,height:36,borderRadius:10,background:'#EDE8F8',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>⚡</div>
                   <div>
                     <div style={{fontSize:14,fontWeight:600,color:'var(--text)'}}>PocketPath v1.0.0</div>
-                    <div style={{fontSize:11,color:'var(--text-muted)'}}>Built with ❤️ for young professionals</div>
+                    <div style={{fontSize:11,color:'var(--text-muted)'}}>Built with ❤️ by Sampreet Ghosh</div>
                   </div>
                 </div>
                 <div style={{fontSize:11,background:'var(--green-pale)',color:'var(--green)',padding:'4px 10px',borderRadius:99,fontWeight:700}}>Latest</div>
@@ -921,7 +921,7 @@ export default function ProfileContent({ isDesktop, showToast }) {
                 <div className="settings-row-icon" style={{background:'#EDE8F8'}}>⚡</div>
                 <div className="settings-row-content">
                   <div className="settings-row-label">PocketPath</div>
-                  <div className="settings-row-sub">Version 1.0.0 · Built with ❤️</div>
+                  <div className="settings-row-sub">Built with ❤️ by Sampreet Ghosh</div>
                 </div>
               </div>
             </div>

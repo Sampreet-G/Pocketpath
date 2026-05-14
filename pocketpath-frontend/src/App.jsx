@@ -145,7 +145,6 @@ function Donut({ data }) {
     </svg>
   );
 }
-
 /* ─── AI INSIGHTS ENGINE ──────────────────────────────────── */
 function generateInsights(data) {
   if (!data) return [];
@@ -173,7 +172,21 @@ function Spinner() { return <div className="loading-spinner"><div className="spi
 function DarkToggle({ dark, toggle }) {
   return <div className="dark-toggle" onClick={toggle} title="Toggle dark mode"><div className="dark-toggle-thumb">{dark?"🌙":"☀️"}</div></div>;
 }
-function Brand() { return <div className="brand"><div className="brand-dot"/>PocketPath</div>; }
+function Brand() {
+  return (
+    <div className="brand">
+        <img
+          src="/piggybank.png"
+          alt="logo"
+          style={{ width: "28px", height: "28px" }}
+      />
+
+      <span className="brand-text">
+        PocketPath
+      </span>
+    </div>
+  );
+}
 
 /* ══════════════ HOME ══════════════════════════════════════ */
 function HomeContent({ isDesktop, onAdd, showToast, refreshKey, dark, setTab }) {
