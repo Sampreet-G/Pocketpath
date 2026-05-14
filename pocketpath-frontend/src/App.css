@@ -1,3 +1,23 @@
+:root {
+  --bg: #08120f;
+  --sidebar: #0d1814;
+  --card: #101b17;
+  --card-hover: #15231d;
+
+  --primary: #59d39b;
+  --primary-dark: #174d3b;
+
+  --text: #f5fff9;
+  --muted: #8ea99a;
+
+  --danger: #ff6b6b;
+  --warning: #feca57;
+
+  --border: rgba(255,255,255,0.06);
+}
+
+
+
 .counter {
   font-size: 16px;
   padding: 5px 10px;
@@ -188,10 +208,7 @@
   gap: 10px;
 }
 
-.brand-logo {
-  width: 24px;
-  height: 24px;
-}
+
 .brand-text {
   font-family: 'Poppins', sans-serif;
   font-size: 24px;

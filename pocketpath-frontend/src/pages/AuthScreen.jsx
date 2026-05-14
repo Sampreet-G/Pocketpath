@@ -68,7 +68,6 @@ const AUTH_CSS = `
 }
 .social-btn:hover { background:var(--bg2); border-color:var(--text-mid); transform:translateY(-1px); box-shadow:var(--shadow); }
 
-.social-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
 
 .auth-divider { display:flex; align-items:center; gap:12px; margin:18px 0; }
 .auth-divider-line { flex:1; height:1px; background:var(--border); }
@@ -99,7 +98,6 @@ const AUTH_CSS = `
   background-size:200% 100%; animation:shimmer 1.5s infinite;
 }
 .auth-err { background:var(--red-light); color:var(--red); border-radius:var(--r-xs); padding:11px 14px; font-size:13px; font-weight:500; margin-bottom:12px; border:1px solid rgba(201,64,64,0.15); }
-.auth-info { background:var(--accent-light); color:var(--accent); border-radius:var(--r-xs); padding:11px 14px; font-size:13px; font-weight:500; margin-bottom:12px; border:1px solid rgba(232,160,48,0.2); }
 .auth-toggle { text-align:center; margin-top:22px; font-size:13px; color:var(--text-muted); }
 .auth-toggle-link { color:var(--green); font-weight:700; cursor:pointer; }
 .auth-toggle-link:hover { text-decoration:underline; }
@@ -151,10 +149,7 @@ export default function AuthScreen() {
     }
   }
 
-  function handleSocial(provider) {
-    setErr('');
-    setInfo(`${provider} OAuth requires configuring a client ID in your backend (.env). See docs: passport.js + ${provider.toLowerCase()}-oauth20`);
-  }
+
 
   return (
     <>
@@ -202,28 +197,17 @@ export default function AuthScreen() {
             <div className="auth-title">{mode==='login'?'Welcome back 👋':'Create account 🎯'}</div>
             <div className="auth-subtitle">{mode==='login'?'Sign in to continue to your dashboard':'Start your financial journey today — free forever'}</div>
 
-            {/* Social auth */}
+            {/* Google sign in */}
             <div style={{marginBottom:18}}>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
-                <button className="social-btn" onClick={()=> window.location.href = 'http://localhost:5000/api/auth/google'} style={{}}>
-                  <svg width="17" height="17" viewBox="0 0 48 48">
-                    <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.6 32.9 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/>
-                    <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
-                    <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.5 26.8 36.5 24 36.5c-5.2 0-9.5-3.1-11.2-7.5l-6.5 5C9.7 39.7 16.3 44 24 44z"/>
-                    <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.7l6.2 5.2C41.3 36.2 44 30.5 44 24c0-1.3-.1-2.6-.4-3.9z"/>
-                  </svg>
-                  Google
-                </button>
-                <button className="social-btn" onClick={()=>handleSocial('Apple')} style={{opacity:0.5,cursor:'not-allowed'}}>
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.54 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701z"/>
-                  </svg>
-                  Apple
-                </button>
-              </div>
-              <div style={{background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:'var(--r-xs)',padding:'9px 12px',fontSize:11,color:'var(--text-muted)',lineHeight:1.5}}>
-                🍎 <strong style={{color:'var(--text-mid)'}}>Apple</strong> requires a paid Apple Developer account. <strong style={{color:'var(--text-mid)'}}>Google</strong> is ready — click the button above.
-              </div>
+              <button className="social-btn" style={{width:'100%',marginBottom:0}} onClick={()=> window.location.href = 'http://localhost:5000/api/auth/google'}>
+                <svg width="18" height="18" viewBox="0 0 48 48">
+                  <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.6 32.9 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/>
+                  <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+                  <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.5 26.8 36.5 24 36.5c-5.2 0-9.5-3.1-11.2-7.5l-6.5 5C9.7 39.7 16.3 44 24 44z"/>
+                  <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.7l6.2 5.2C41.3 36.2 44 30.5 44 24c0-1.3-.1-2.6-.4-3.9z"/>
+                </svg>
+                Continue with Google
+              </button>
             </div>
 
             <div className="auth-divider">
@@ -276,7 +260,6 @@ export default function AuthScreen() {
                 </div>
               )}
               {err  && <div className="auth-err">⚠️ {err}</div>}
-              {info && <div className="auth-info">ℹ️ {info}</div>}
               <button className="auth-submit" type="submit" disabled={busy}>
                 {busy && <div className="auth-submit-shimmer"/>}
                 {busy ? 'Please wait…' : mode==='login' ? 'Sign In →' : 'Create Account →'}
