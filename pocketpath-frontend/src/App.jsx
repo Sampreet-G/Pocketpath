@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "./context/AuthContext";
 import { dashboardApi, txApi, goalsApi, insightsApi, reflectApi, profileApi } from "./api";
-import OnboardingDemo from "./pages/OnboardingDemo";
-import ProfilePage from "./pages/ProfilePage";
+import OnboardingDemo from "./pages/Onboardingdemo";
+import ProfilePage from "./pages/Profilepage";
 
 /* ─── CONSTANTS ──────────────────────────────────────────── */
 const CAT_ICON = {
