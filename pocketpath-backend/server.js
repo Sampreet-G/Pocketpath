@@ -31,7 +31,7 @@ const allowedOrigins = [
   process.env.CLIENT_ORIGIN,
 ].filter(Boolean);
 
-const FRONTEND_URL = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
+const FRONTEND_URL = process.env.CLIENT_ORIGIN || 'https://pocketpathbysampreet.vercel.app';
 
 // ─── Core middleware ──────────────────────────────────────────
 app.use(cors({
